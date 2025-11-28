@@ -10,96 +10,98 @@
   --glass-border: rgba(255,255,255,0.18);
   --gold: #d4af37;
   --muted: rgba(255,255,255,0.7);
-  --radius: 14px;
-}body{
+  --radius: 16px;
+  --shadow: rgba(0,0,0,0.5);
+}
+body{
 margin:0;
 font-family: 'Inter', sans-serif;
 background: var(--bg-gradient);
 color:white;
 }
 
+/* ---------------- HEADER ---------------- */
 .topbar{
 position: sticky;
 top:0;
 z-index: 50;
 backdrop-filter: blur(12px);
 background: rgba(0,0,0,0.5);
-padding:16px;
-text-align:center;
+padding:16px 0 8px 0;
+display:flex;
+flex-direction:column;
+align-items:center;
 border-bottom:1px solid rgba(255,255,255,0.1);
 }
 
 .logo{
-font-size: 26px;
+font-size: 28px;
 font-weight: 700;
 color: var(--gold);
 margin-bottom:12px;
 }
 
+/* ---------------- CATEGORY SCROLLER ---------------- /
 .category-grid{
-display:grid;
-grid-template-columns: repeat(4, 1fr);
+display:flex;
+overflow-x:auto;
 gap:12px;
-margin-top:12px;
+padding:0 16px;
+scrollbar-width: none; / Firefox /
 }
+.category-grid::-webkit-scrollbar { display:none; } / Chrome/Safari */
 
 .cat-btn{
-padding:8px 0;
-border-radius: 12px;
+flex: 0 0 auto;
+padding:8px 16px;
+border-radius: 50px;
 background: rgba(255,255,255,0.1);
 border:1px solid var(--glass-border);
 color:white;
-font-size: 14px;
+font-size:14px;
 font-weight:600;
 cursor:pointer;
-transition:0.2s;
-text-align:center;
+transition:0.3s;
+white-space: nowrap;
 }
-
 .cat-btn.active{
 background: var(--gold);
 color:black;
+box-shadow: 0 4px 12px var(--shadow);
 }
 
+/* ---------------- PRODUCT GRID ---------------- */
 .grid{
 padding:16px;
 display:grid;
 grid-template-columns: repeat(2, 1fr);
-gap:16px;
+gap:20px;
 }
-
-@media(min-width:768px){
-.grid{
-grid-template-columns: repeat(3, 1fr);
-}
-}
-
-@media(min-width:1024px){
-.grid{
-grid-template-columns: repeat(4, 1fr);
-}
-}
+@media(min-width:768px){ .grid{ grid-template-columns: repeat(3, 1fr); } }
+@media(min-width:1024px){ .grid{ grid-template-columns: repeat(4, 1fr); } }
 
 .card{
 background: var(--glass-bg);
 border:1px solid var(--glass-border);
-backdrop-filter: blur(10px);
+backdrop-filter: blur(12px);
 border-radius: var(--radius);
 overflow:hidden;
-box-shadow: 0 8px 20px rgba(0,0,0,0.6);
-transition:0.2s;
+box-shadow: 0 6px 20px var(--shadow);
+transition:0.3s;
 }
-
 .card:hover{
-transform: translateY(-4px);
+transform: translateY(-6px);
+box-shadow: 0 12px 30px var(--shadow);
 }
 
 .card img{
 width:100%;
-height:200px;
+height:220px;
 object-fit: cover;
 cursor:pointer;
+transition:0.3s;
 }
+.card img:hover{ transform: scale(1.03); }
 
 .card-body{
 padding:12px;
@@ -107,53 +109,51 @@ padding:12px;
 
 .category-tag{
 display:inline-block;
-padding:3px 10px;
-border-radius: 12px;
+padding:4px 12px;
+border-radius: 50px;
 border:1px solid var(--gold);
-font-size: 12px;
-margin-bottom:6px;
+font-size:12px;
+margin-bottom:8px;
 }
 
 .title{
-font-size: 16px;
-font-weight: 600;
+font-size:16px;
+font-weight:600;
+margin-bottom:4px;
 }
 
 .price{
 color: var(--gold);
-font-weight: 700;
-margin:6px 0;
+font-weight:700;
+margin-bottom:8px;
 }
 
 .order-btn{
-margin-top:8px;
+margin-top:4px;
 width:100%;
-padding:8px;
+padding:10px 0;
 border:none;
-border-radius: var(--radius);
+border-radius: 50px;
 background: var(--gold);
 color:black;
 font-weight:600;
 cursor:pointer;
-transition:0.2s;
+transition:0.3s;
 }
+.order-btn:hover{ opacity:0.9; transform: scale(1.02); }
 
-.order-btn:hover{
-opacity:0.9;
-}
-
+/* ---------------- MODAL ---------------- */
 .modal{
 position: fixed;
 top:0; left:0;
 width:100%; height:100%;
-background: rgba(0,0,0,0.8);
+background: rgba(0,0,0,0.85);
 backdrop-filter: blur(12px);
 display:none;
 justify-content:center;
 align-items:center;
 padding:20px;
 }
-
 .modal-content{
 background: var(--glass-bg);
 border:1px solid var(--glass-border);
@@ -161,28 +161,30 @@ backdrop-filter: blur(14px);
 padding:20px;
 border-radius: var(--radius);
 width:100%;
-max-width:450px;
+max-width:480px;
+text-align:center;
 }
-
 .modal img{
 width:100%;
 border-radius: var(--radius);
-margin-bottom:10px;
+margin-bottom:12px;
 }
-
 .close{
 float:right;
-font-size:20px;
+font-size:22px;
 cursor:pointer;
 color:white;
 }
 </style>
 
 </head>
-<body><div class="topbar">
+<body>
+  <div class="topbar">
   <div class="logo">Abby Wears</div>
   <div class="category-grid" id="categoryBar"></div>
-</div><div class="grid" id="productGrid"></div><div class="modal" id="modal">
+</div>
+<div class="grid" id="productGrid"></div>
+<div class="modal" id="modal">
   <div class="modal-content">
     <span class="close" onclick="closeModal()">&times;</span>
     <img id="modalImg">
@@ -197,16 +199,8 @@ color:white;
 const backendURL = "https://abby-vybw.onrender.com";
 
 const categories = [
-  "All",
-  "Bubu",
-  "2 Piece",
-  "Jumpsuit",
-  "Jeans",
-  "Beach Wears",
-  "Gowns",
-  "Joggers",
-  "Top",
-  "Luxury Wear"
+  "All","Bubu","2 Piece","Jumpsuit","Jeans",
+  "Beach Wears","Gowns","Joggers","Top","Luxury Wear"
 ];
 
 const categoryBar = document.getElementById("categoryBar");
@@ -222,7 +216,6 @@ categories.forEach(cat=>{
 
 let products = [];
 
-// FETCH PRODUCTS FROM BACKEND
 async function fetchProducts(){
   try{
     const res = await fetch(`${backendURL}/products`);
@@ -289,7 +282,6 @@ Ref: ${product._id}`;
   window.open(url, "_blank");
 }
 
-// INITIAL FETCH
 fetchProducts();
 </script>
 </body>
