@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Abby Wears – Luxury Fashion</title>
+
+<style>
+/* ------------------------ */
+/*        BASE STYLE        */
+/* ------------------------ */
+:root{
+  --bg-gradient: linear-gradient(to bottom, #000000, #1a1a1a);
+  --glass-bg: rgba(255,255,255,0.06);
+  --glass-border: rgba(255,255,255,0.18);
+  --gold: #d4af37;
+  --muted: rgba(255,255,255,0.7);
+  --radius: 14px;
+}
+
+body{
+  margin:0;
+  font-family: 'Inter', sans-serif;
+  background: var(--bg-gradient);
+  color:white;
+}
+
+/* ------------------------ */
+/*        HEADER AREA        */
+/* ------------------------ */
+.topbar{
+  position: sticky;
+  top:0;
+  z-index: 50;
+  backdrop-filter: blur(12px);
+  background: rgba(0,0,0,0.5);
+  padding:16px;
+  text-align:center;
+  border-bottom:1px solid rgba(255,255,255,0.1);
+}
+
+.logo{
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom:12px;
+}
+
+/* Category Grid under logo */
+.category-grid{
+  display:grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap:12px;
+  margin-top:12px;
+}
+
+.cat-btn{
+  padding:8px 0;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.1);
+  border:1px solid var(--glass-border);
+  color:white;
+  font-size: 14px;
+  font-weight:600;
+  cursor:pointer;
+  transition:0.2s;
+  text-align:center;
+}
+
+.cat-btn.active{
+  background: var(--gold);
+  color:black;
+}
+
+/* ------------------------ */
+/*      PRODUCT GRID        */
+/* ------------------------ */
+.grid{
+  padding:16px;
+  display:grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap:16px;
+}
+
+@media(min-width:768px){
+  .grid{
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media(min-width:1024px){
+  .grid{
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.card{
+  background: var(--glass-bg);
+  border:1px solid var(--glass-border);
+  backdrop-filter: blur(10px);
+  border-radius: var(--radius);
+  overflow:hidden;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+  transition:0.2s;
+}
+
+.card:hover{
+  transform: translateY(-4px);
+}
+
+.card img{
+  width:100%;
+  height:200px;
+  object-fit: cover;
+  cursor:pointer;
+}
+
+.card-body{
+  padding:12px;
+}
+
+.category-tag{
+  display:inline-block;
+  padding:3px 10px;
+  border-radius: 12px;
+  border:1px solid var(--gold);
+  font-size: 12px;
+  margin-bottom:6px;
+}
+
+.title{
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.price{
+  color: var(--gold);
+  font-weight: 700;
+  margin:6px 0;
+}
+
+.order-btn{
+  margin-top:8px;
+  width:100%;
+  padding:8px;
+  border:none;
+  border-radius: var(--radius);
+  background: var(--gold);
+  color:black;
+  font-weight:600;
+  cursor:pointer;
+  transition:0.2s;
+}
+
+.order-btn:hover{
+  opacity:0.9;
+}
+
+/* ------------------------ */
+/*     PREVIEW MODAL        */
+/* ------------------------ */
+.modal{
+  position: fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(12px);
+  display:none;
+  justify-content:center;
+  align-items:center;
+  padding:20px;
+}
+
+.modal-content{
+  background: var(--glass-bg);
+  border:1px solid var(--glass-border);
+  backdrop-filter: blur(14px);
+  padding:20px;
+  border-radius: var(--radius);
+  width:100%;
+  max-width:450px;
+}
+
+.modal img{
+  width:100%;
+  border-radius: var(--radius);
+  margin-bottom:10px;
+}
+
+.close{
+  float:right;
+  font-size:20px;
+  cursor:pointer;
+  color:white;
+}
+</style>
+</head>
+
+<body>
+
+<!-- -------------------------------------- -->
+<!--                HEADER                  -->
+<!-- -------------------------------------- -->
+<div class="topbar">
+  <div class="logo">Abby Wears</div>
+  <div class="category-grid" id="categoryBar"></div>
+</div>
+
+<!-- -------------------------------------- -->
+<!--              PRODUCT GRID              -->
+<!-- -------------------------------------- -->
+<div class="grid" id="productGrid"></div>
+
+<!-- -------------------------------------- -->
+<!--             PREVIEW MODAL              -->
+<!-- -------------------------------------- -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal()">&times;</span>
+    <img id="modalImg">
+    <h2 id="modalTitle"></h2>
+    <p class="price" id="modalPrice"></p>
+    <p id="modalDesc"></p>
+    <button class="order-btn" id="modalOrderBtn">Order on WhatsApp</button>
+  </div>
+</div>
+
+<script>
+/* ---------------------------------------------------- */
+/*                  CATEGORY LIST                       */
+/* ---------------------------------------------------- */
+const categories = [
+  "All",
+  "Bubu",
+  "2 Piece",
+  "Jumpsuit",
+  "Jeans",
+  "Beach Wears",
+  "Gowns",
+  "Joggers",
+  "Top",
+  "Luxury Wear"
+];
+
+const categoryBar = document.getElementById("categoryBar");
+
+// Clear existing buttons (optional if rerendering)
+categoryBar.innerHTML = "";
+
+categories.forEach(cat=>{
+  const btn = document.createElement("button");
+  btn.className = "cat-btn";
+  btn.innerText = cat;
+  if(cat==="All") btn.classList.add("active"); // default selection
+  btn.addEventListener("click", ()=> filterCategory(cat));
+  categoryBar.appendChild(btn);
+});
+
+
+/* ---------------------------------------------------- */
+/*               DEMO PRODUCT DATA                      */
+/*     Replace with your backend fetch() later          */
+/* ---------------------------------------------------- */
+let products = [
+  {
+    id:1,
+    name:"Premium Bubu 01",
+    category:"Bubu",
+    price:"14,000",
+    desc:"A luxury free-size Bubu with elegant floral patterns.",
+    image:"https://via.placeholder.com/500"
+  },
+  {
+    id:2,
+    name:"2 Piece Cream Set",
+    category:"2 Piece",
+    price:"10,000",
+    desc:"Soft textured material, luxury design.",
+    image:"https://via.placeholder.com/500"
+  },
+  {
+    id:3,
+    name:"Jumpsuit Chic Black",
+    category:"Jumpsuit",
+    price:"12,500",
+    desc:"Elegant jumpsuit for evening occasions.",
+    image:"https://via.placeholder.com/500"
+  },
+  {
+    id:4,
+    name:"Luxury Gold Top",
+    category:"Luxury Wear",
+    price:"18,000",
+    desc:"Premium top with metallic finish.",
+    image:"https://via.placeholder.com/500"
+  }
+];
+
+
+/* ---------------------------------------------------- */
+/*                RENDER PRODUCTS                        */
+/* ---------------------------------------------------- */
+function renderProducts(list){
+  const grid = document.getElementById("productGrid");
+  grid.innerHTML = "";
+
+  list.forEach(p=>{
+    grid.innerHTML += `
+      <div class="card">
+        <img src="${p.image}" onclick='openModal(${JSON.stringify(p)})'>
+        <div class="card-body">
+          <span class="category-tag">${p.category}</span>
+          <div class="title">${p.name}</div>
+          <div class="price">₦${p.price}</div>
+          <button class="order-btn"
+            onclick='orderWhatsApp(${JSON.stringify(p)})'>
+            Order on WhatsApp
+          </button>
+        </div>
+      </div>
+    `;
+  });
+}
+
+renderProducts(products);
+
+
+/* ---------------------------------------------------- */
+/*                CATEGORY FILTERING                     */
+/* ---------------------------------------------------- */
+function filterCategory(cat){
+  document.querySelectorAll(".cat-btn").forEach(b=>b.classList.remove("active"));
+  [...document.querySelectorAll(".cat-btn")].find(b=>b.innerText===cat).classList.add("active");
+
+  if(cat==="All") return renderProducts(products);
+
+  const filtered = products.filter(p=>p.category===cat);
+  renderProducts(filtered);
+}
+
+
+/* ---------------------------------------------------- */
+/*                PREVIEW MODAL                          */
+/* ---------------------------------------------------- */
+function openModal(data){
+  document.getElementById("modalImg").src = data.image;
+  document.getElementById("modalTitle").innerText = data.name;
+  document.getElementById("modalPrice").innerText = "₦" + data.price;
+  document.getElementById("modalDesc").innerText = data.desc;
+
+  document.getElementById("modalOrderBtn").onclick = ()=> orderWhatsApp(data);
+
+  document.getElementById("modal").style.display="flex";
+}
+
+function closeModal(){
+  document.getElementById("modal").style.display="none";
+}
+
+
+/* ---------------------------------------------------- */
+/*              WHATSAPP ORDER BUTTON                    */
+/* ---------------------------------------------------- */
+function orderWhatsApp(product){
+  const message =
+`Hello Abby Wears,
+I would like to order this item:
+
+Item: ${product.name}
+Category: ${product.category}
+Price: ₦${product.price}
+Image: ${product.image}
+Ref: ${product.id}`;
+
+  const url = "https://wa.me/2349122054068?text=" + encodeURIComponent(message);
+  window.open(url, "_blank");
+}
+</script>
+</body>
+</html>
