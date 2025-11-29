@@ -59,6 +59,10 @@ body{
   color: var(--gold);
   text-align:center;
 }
+.logo img{
+   height: 100px;
+   border-radius: 10%;
+}
 
 /* cart icon top-right (absolute inside topbar-inner) */
 .cart-btn{
@@ -370,7 +374,10 @@ body{
 <!-- TOPBAR -->
 <div class="topbar">
   <div class="topbar-inner">
-    <div class="logo">Abby's Secret</div>
+   <!-- <div class="logo">Abby's Secret</div>-->
+    <div class="logo">
+      <img src="uploads/abby.png" alt="logo" />
+</div>
 
     <!-- cart icon top-right -->
     <button id="cartBtn" class="cart-btn" aria-label="Open cart">
