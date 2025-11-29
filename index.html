@@ -1,8 +1,9 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Abby Wears – Luxury Fashion</title>
+<title>Abby's Secret– Luxury Fashion</title>
 <style>
 :root{
   --bg-gradient: linear-gradient(to bottom, #000000, #1a1a1a);
@@ -21,7 +22,8 @@ body{
   font-size:14px;
   font-weight:400;
   line-height:1.4;
-}/* ---------------- HEADER ---------------- */
+}
+/* ---------------- HEADER ---------------- */
 .topbar{
 position: sticky;
 top:0;
@@ -50,8 +52,9 @@ gap:12px;
 padding:0 16px;
 scrollbar-width: none; / Firefox /
 }
-.category-grid::-webkit-scrollbar { display:none; } / Chrome/Safari */
+.category-grid::-webkit-scrollbar { display:none; } 
 
+/ Chrome/Safari */
 .cat-btn{
 flex:0 0 auto;
 padding:6px 14px;
@@ -190,7 +193,7 @@ color:white;
 </head>
 <body>
 <div class="topbar">
-  <div class="logo">Abby Wears</div>
+  <div class="logo">Abby's Secret </div>
   <div class="category-grid" id="categoryBar"></div>
 </div><div class="grid" id="productGrid"></div><div class="modal" id="modal">
   <div class="modal-content">
@@ -201,7 +204,10 @@ color:white;
     <p id="modalDesc"></p>
     <button class="order-btn" id="modalOrderBtn">Order on WhatsApp</button>
   </div>
-</div><script>
+</div>
+
+
+<script>
 const backendURL = "https://abby-vybw.onrender.com";
 
 const categories = ["All","Bubu","2 Piece","Jumpsuit","Jeans","Beach Wears","Gowns","Joggers","Top","Luxury Wear"];
@@ -286,5 +292,6 @@ Ref: ${product._id}`;
 }
 
 fetchProducts();
-</script></body>
+</script>
+</body>
 </html>
