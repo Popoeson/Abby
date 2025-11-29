@@ -436,21 +436,12 @@ const backendURL = "https://abby-vybw.onrender.com";
 
 window.addEventListener('load', () => {
   const ad = document.getElementById('adOverlay');
-  const content = document.getElementById('pageContent');
-
-  // apply blur when ad shows
-  content.classList.add('blur');
-
+  
   setTimeout(() => {
-    // fade out the ad
+    // fade out effect
     ad.style.transition = "opacity 0.5s ease";
     ad.style.opacity = "0";
-
-    // remove blur after fade
-    setTimeout(() => {
-      ad.remove();
-      content.classList.remove('blur');
-    }, 500); // match fade duration
+    setTimeout(() => ad.remove(), 500); // remove from DOM after fade
   }, 3000); // 3 seconds
 });
 
