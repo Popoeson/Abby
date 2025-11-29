@@ -12,12 +12,13 @@
   --muted: rgba(255,255,255,0.7);
   --radius: 16px;
   --shadow: rgba(0,0,0,0.5);
-}
-body{
+}body{
 margin:0;
 font-family: 'Inter', sans-serif;
 background: var(--bg-gradient);
 color:white;
+font-size: 14px;
+font-weight: 400;
 }
 
 /* ---------------- HEADER ---------------- */
@@ -27,7 +28,7 @@ top:0;
 z-index: 50;
 backdrop-filter: blur(12px);
 background: rgba(0,0,0,0.5);
-padding:16px 0 8px 0;
+padding:12px 0 6px 0;
 display:flex;
 flex-direction:column;
 align-items:center;
@@ -35,10 +36,10 @@ border-bottom:1px solid rgba(255,255,255,0.1);
 }
 
 .logo{
-font-size: 28px;
-font-weight: 700;
+font-size: 22px;
+font-weight: 600;
 color: var(--gold);
-margin-bottom:12px;
+margin-bottom:10px;
 }
 
 /* ---------------- CATEGORY SCROLLER ---------------- /
@@ -53,13 +54,13 @@ scrollbar-width: none; / Firefox /
 
 .cat-btn{
 flex: 0 0 auto;
-padding:8px 16px;
+padding:6px 14px;
 border-radius: 50px;
 background: rgba(255,255,255,0.1);
 border:1px solid var(--glass-border);
 color:white;
-font-size:14px;
-font-weight:600;
+font-size:13px;
+font-weight:500;
 cursor:pointer;
 transition:0.3s;
 white-space: nowrap;
@@ -75,7 +76,7 @@ box-shadow: 0 4px 12px var(--shadow);
 padding:16px;
 display:grid;
 grid-template-columns: repeat(2, 1fr);
-gap:20px;
+gap:18px;
 }
 @media(min-width:768px){ .grid{ grid-template-columns: repeat(3, 1fr); } }
 @media(min-width:1024px){ .grid{ grid-template-columns: repeat(4, 1fr); } }
@@ -90,53 +91,53 @@ box-shadow: 0 6px 20px var(--shadow);
 transition:0.3s;
 }
 .card:hover{
-transform: translateY(-6px);
-box-shadow: 0 12px 30px var(--shadow);
+transform: translateY(-4px);
+box-shadow: 0 10px 28px var(--shadow);
 }
 
 .card img{
 width:100%;
-height:220px;
+height:200px;
 object-fit: cover;
 cursor:pointer;
 transition:0.3s;
 }
-.card img:hover{ transform: scale(1.03); }
+.card img:hover{ transform: scale(1.02); }
 
 .card-body{
-padding:12px;
+padding:10px;
 }
 
 .category-tag{
 display:inline-block;
-padding:4px 12px;
+padding:3px 10px;
 border-radius: 50px;
 border:1px solid var(--gold);
-font-size:12px;
-margin-bottom:8px;
+font-size:11px;
+margin-bottom:6px;
 }
 
 .title{
-font-size:16px;
-font-weight:600;
+font-size:14px;
+font-weight:500;
 margin-bottom:4px;
 }
 
 .price{
 color: var(--gold);
-font-weight:700;
-margin-bottom:8px;
+font-weight:600;
+margin-bottom:6px;
 }
 
 .order-btn{
 margin-top:4px;
 width:100%;
-padding:10px 0;
+padding:8px 0;
 border:none;
 border-radius: 50px;
 background: var(--gold);
 color:black;
-font-weight:600;
+font-weight:500;
 cursor:pointer;
 transition:0.3s;
 }
@@ -153,7 +154,10 @@ display:none;
 justify-content:center;
 align-items:center;
 padding:20px;
+overflow-y:auto;
+z-index:1000;
 }
+
 .modal-content{
 background: var(--glass-bg);
 border:1px solid var(--glass-border);
@@ -163,28 +167,30 @@ border-radius: var(--radius);
 width:100%;
 max-width:480px;
 text-align:center;
+margin:60px 0;
 }
+
 .modal img{
 width:100%;
+max-height:60vh;
+object-fit: contain;
 border-radius: var(--radius);
 margin-bottom:12px;
 }
+
 .close{
 float:right;
-font-size:22px;
+font-size:20px;
 cursor:pointer;
 color:white;
 }
 </style>
 
 </head>
-<body>
-  <div class="topbar">
+<body><div class="topbar">
   <div class="logo">Abby Wears</div>
   <div class="category-grid" id="categoryBar"></div>
-</div>
-<div class="grid" id="productGrid"></div>
-<div class="modal" id="modal">
+</div><div class="grid" id="productGrid"></div><div class="modal" id="modal">
   <div class="modal-content">
     <span class="close" onclick="closeModal()">&times;</span>
     <img id="modalImg">
@@ -193,15 +199,10 @@ color:white;
     <p id="modalDesc"></p>
     <button class="order-btn" id="modalOrderBtn">Order on WhatsApp</button>
   </div>
-</div>
-
-<script>
+</div><script>
 const backendURL = "https://abby-vybw.onrender.com";
 
-const categories = [
-  "All","Bubu","2 Piece","Jumpsuit","Jeans",
-  "Beach Wears","Gowns","Joggers","Top","Luxury Wear"
-];
+const categories = ["All","Bubu","2 Piece","Jumpsuit","Jeans","Beach Wears","Gowns","Joggers","Top","Luxury Wear"];
 
 const categoryBar = document.getElementById("categoryBar");
 categoryBar.innerHTML = "";
@@ -283,6 +284,5 @@ Ref: ${product._id}`;
 }
 
 fetchProducts();
-</script>
-</body>
+</script></body>
 </html>
