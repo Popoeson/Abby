@@ -339,25 +339,24 @@ body{
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.5); /* optional dark overlay for contrast */
+  background: rgba(0,0,0,0.5);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 9999; /* make sure it's above everything else */
+  z-index: 9999;
   animation: fadeIn 0.3s ease;
 }
 
 #adOverlay img {
-  max-width: 100%;
-  max-height: 100%;
+  max-width: 80%;
+  max-height: 80%;
   border-radius: 12px;
   box-shadow: 0 0 20px rgba(0,0,0,0.5);
 }
 
-/* optional fadeIn animation */
-@keyframes fadeIn {
-  from {opacity: 0;}
-  to {opacity: 1;}
+#pageContent.blur {
+  filter: blur(5px); /* adjust blur intensity */
+  transition: filter 0.3s ease;
 }
 
 </style>
@@ -437,12 +436,21 @@ const backendURL = "https://abby-vybw.onrender.com";
 
 window.addEventListener('load', () => {
   const ad = document.getElementById('adOverlay');
-  
+  const content = document.getElementById('pageContent');
+
+  // apply blur when ad shows
+  content.classList.add('blur');
+
   setTimeout(() => {
-    // fade out effect
+    // fade out the ad
     ad.style.transition = "opacity 0.5s ease";
     ad.style.opacity = "0";
-    setTimeout(() => ad.remove(), 500); // remove from DOM after fade
+
+    // remove blur after fade
+    setTimeout(() => {
+      ad.remove();
+      content.classList.remove('blur');
+    }, 500); // match fade duration
   }, 3000); // 3 seconds
 });
 
