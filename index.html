@@ -531,6 +531,13 @@ function closeModal(){
   modal.setAttribute("aria-hidden","true");
 }
 
+// Close modal when clicking outside the modal-content
+modal.addEventListener("click", function(e){
+  if (!e.target.closest(".modal-content")) {
+    closeModal();
+  }
+});
+
 /* ---------- cart functions ---------- */
 
 /* cart item structure:
