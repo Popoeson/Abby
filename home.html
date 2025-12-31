@@ -743,16 +743,11 @@ function recalcDeliveryTotal(){
   deliveryTotal.innerText = "Total: ₦" + formatNumber(subtotal + deliveryFee);
 }
 
-/* ---------- ORDER VIA WHATSAPP (for modal "Order" button) ---------- */
+/* ---------- ORDER VIA WHATSAPP (modal order button) ---------- */
 function orderWhatsApp(product){
-  // Add product to cart if not already
   addToCartGeneric(product,1);
-
-  // Show delivery form
   deliveryForm.style.display = "flex";
   checkoutBtn.style.display = "none";
-
-  // Scroll to delivery form
   deliveryForm.scrollIntoView({behavior:"smooth"});
 }
 
@@ -814,14 +809,20 @@ proceedPaymentBtn.addEventListener("click", async function() {
             if (verifyData.status === "success") {
               toast("Payment successful! Order confirmed.");
 
-              // Show order summary
+              // hide cart so summary is visible
+              hideCart();
+
+              // show order summary
               orderSummaryDiv.style.display = "block";
+
               const itemsContainer = document.getElementById("summaryItems");
               itemsContainer.innerHTML = cart.map(i => 
                 `<div>${i.name} x${i.qty} - ₦${formatNumber(i.qty*(i.rawPrice||normalizePrice(i.price)))}</div>`
               ).join("");
 
-              document.getElementById("summaryTotal").innerHTML = `<strong>Total Paid: ₦${formatNumber(totalAmount)}</strong>`;
+              document.getElementById("summaryTotal").innerHTML =
+                `<strong>Total Paid: ₦${formatNumber(totalAmount)}</strong>`;
+
               document.getElementById("summaryDelivery").innerHTML = `
                 <strong>Delivery Details:</strong><br>
                 Name: ${name}<br>
@@ -831,14 +832,15 @@ proceedPaymentBtn.addEventListener("click", async function() {
                 Mode: ${mode}
               `;
 
-              // WhatsApp button
+              orderSummaryDiv.scrollIntoView({ behavior: "smooth" });
+
               sendOrderWhatsAppBtn.onclick = () => {
                 const message = `
 Hello Abby Secret,
 I have placed an order:
 
 Items:
-${cart.map(i => `- ${i.name} x${i.qty}`).join("\n")}
+${cart.map(i => \`- \${i.name} x\${i.qty}\`).join("\\n")}
 
 Total Paid: ₦${formatNumber(totalAmount)}
 Delivery Details:
@@ -851,10 +853,8 @@ Mode: ${mode}
                 const url = "https://wa.me/2349122054068?text=" + encodeURIComponent(message);
                 window.open(url, "_blank");
 
-                // Clear cart and hide forms
                 cart = [];
                 saveCart();
-                hideCart();
                 deliveryForm.style.display = "none";
                 orderSummaryDiv.style.display = "none";
               };
