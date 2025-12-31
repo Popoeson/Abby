@@ -741,8 +741,8 @@ function recalcDeliveryTotal(){
   deliveryTotal.innerText = "Total: ₦" + formatNumber(subtotal + deliveryFee);
 }
 
-/* ---------- Paystack Payment ---------- */
-proceedPaymentBtn.addEventListener("click", async function() {
+// =========== PAYSTACK ===========
+proceedPaymentBtn.addEventListener("click", function() {
   const name = document.getElementById("delName").value.trim();
   const address = document.getElementById("delAddress").value.trim();
   const phone = document.getElementById("delPhone").value.trim();
@@ -759,61 +759,65 @@ proceedPaymentBtn.addEventListener("click", async function() {
   const deliveryFee = mode === "door" ? 1500 : 0;
   const totalAmount = subtotal + deliveryFee;
 
-  try {
-    // 1️⃣ Initiate payment on backend
-    const res = await fetch(`${backendURL}/api/payment/initiate`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name, address, phone, bus, mode, cartItems: cart, amount: totalAmount
-      })
-    });
-    const data = await res.json();
-    if (!data || !data.reference) {
-      alert("Failed to initiate payment. Try again.");
-      return;
-    }
+  (async function initiatePayment() {
+    try {
+      // 1️⃣ Initiate payment on backend
+      const res = await fetch(`${backendURL}/api/payment/initiate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, address, phone, bus, mode, cartItems: cart, amount: totalAmount })
+      });
+      const data = await res.json();
+      if (!data || !data.reference) {
+        alert("Failed to initiate payment. Try again.");
+        return;
+      }
 
-    // 2️⃣ Paystack Inline
-    const handler = PaystackPop.setup({
-      key: data.publicKey,
-      email: emailField ? emailField.value.trim() || "customer@example.com" : "customer@example.com",
-      amount: totalAmount * 100,
-      currency: "NGN",
-      ref: data.reference,
-      onClose: function() { alert("Payment window closed."); },
-      callback: async function(response){
-        try {
-          const verifyRes = await fetch(`${backendURL}/api/payment/verify`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ reference: response.reference })
-          });
-          const verifyData = await verifyRes.json();
-          if (verifyData.status === "success") {
-            toast("Payment successful! Order confirmed.");
+      // 2️⃣ Paystack Inline
+      const handler = PaystackPop.setup({
+        key: data.publicKey,
+        email: emailField ? emailField.value.trim() || "customer@example.com" : "customer@example.com",
+        amount: totalAmount * 100, // amount in kobo
+        currency: "NGN",
+        ref: data.reference,
+        onClose: function() {
+          alert("Payment window closed.");
+        },
+        callback: function(response) {
+          // Wrap async inside normal function
+          (async function verifyPayment() {
+            try {
+              const verifyRes = await fetch(`${backendURL}/api/payment/verify`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ reference: response.reference })
+              });
+              const verifyData = await verifyRes.json();
 
-            // Show order summary
-            orderSummaryDiv.style.display = "block";
-            const itemsContainer = document.getElementById("summaryItems");
-            itemsContainer.innerHTML = cart.map(i=>`<div>${i.name} x${i.qty} - ₦${formatNumber(i.qty*(i.rawPrice||normalizePrice(i.price)))}</div>`).join("");
-            document.getElementById("summaryTotal").innerHTML = `<strong>Total Paid: ₦${formatNumber(totalAmount)}</strong>`;
-            document.getElementById("summaryDelivery").innerHTML = `
-              <strong>Delivery Details:</strong><br>
-              Name: ${name}<br>
-              Address: ${address}<br>
-              Phone: ${phone}<br>
-              Bus Stop: ${bus}<br>
-              Mode: ${mode}
-            `;
-            
-            document.getElementById("sendOrderWhatsAppBtn").onclick = ()=> {
-              const message = `
+              if (verifyData.status === "success") {
+                toast("Payment successful! Order confirmed.");
+
+                // Show order summary
+                orderSummaryDiv.style.display = "block";
+                const itemsContainer = document.getElementById("summaryItems");
+                itemsContainer.innerHTML = cart.map(i => `<div>${i.name} x${i.qty} - ₦${formatNumber(i.qty*(i.rawPrice||normalizePrice(i.price)))}</div>`).join("");
+                document.getElementById("summaryTotal").innerHTML = `<strong>Total Paid: ₦${formatNumber(totalAmount)}</strong>`;
+                document.getElementById("summaryDelivery").innerHTML = `
+                  <strong>Delivery Details:</strong><br>
+                  Name: ${name}<br>
+                  Address: ${address}<br>
+                  Phone: ${phone}<br>
+                  Bus Stop: ${bus}<br>
+                  Mode: ${mode}
+                `;
+
+                document.getElementById("sendOrderWhatsAppBtn").onclick = () => {
+                  const message = `
 Hello Abby Secret,
 I have placed an order:
 
 Items:
-${cart.map(i=>`- ${i.name} x${i.qty}`).join("\n")}
+${cart.map(i => `- ${i.name} x${i.qty}`).join("\n")}
 
 Total Paid: ₦${formatNumber(totalAmount)}
 Delivery Details:
@@ -823,34 +827,35 @@ Phone: ${phone}
 Bus Stop: ${bus}
 Mode: ${mode}
 `;
-              const url = "https://wa.me/2347083276512?text=" + encodeURIComponent(message);
-              window.open(url, "_blank");
-            };
+                  const url = "https://wa.me/2347083276512?text=" + encodeURIComponent(message);
+                  window.open(url, "_blank");
+                };
 
-            // Clear cart after order confirmed
-            cart = [];
-            saveCart();
+                // Clear cart and hide forms
+                cart = [];
+                saveCart();
+                hideCart();
+                deliveryForm.style.display = "none";
 
-            // Hide cart & delivery form
-            hideCart();
-            deliveryForm.style.display = "none";
+              } else {
+                alert("Payment verification failed. Please contact support.");
+              }
 
-          } else {
-            alert("Payment verification failed. Please contact support.");
-          }
-        } catch(err){
-          console.error(err);
-          alert("Error verifying payment.");
+            } catch(err) {
+              console.error(err);
+              alert("Error verifying payment.");
+            }
+          })();
         }
-      }
-    });
+      });
 
-    handler.openIframe();
+      handler.openIframe();
 
-  } catch(err){
-    console.error(err);
-    alert("Error initiating payment. Try again.");
-  }
+    } catch(err) {
+      console.error(err);
+      alert("Error initiating payment. Try again.");
+    }
+  })();
 });
 
 /* ---------- WhatsApp order for single item ---------- */
