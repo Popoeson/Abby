@@ -755,7 +755,6 @@ proceedPaymentBtn.addEventListener("click", async function() {
     return;
   }
 
-  // Prevent multiple clicks
   proceedPaymentBtn.disabled = true;
 
   const subtotal = cart.reduce((s, i) => s + i.qty * (i.rawPrice || normalizePrice(i.price)), 0);
@@ -763,7 +762,7 @@ proceedPaymentBtn.addEventListener("click", async function() {
   const totalAmount = subtotal + deliveryFee;
 
   try {
-    // 1️⃣ Initiate payment on backend
+    // Initiate payment on backend
     const res = await fetch(`${backendURL}/api/payment/initiate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -777,11 +776,11 @@ proceedPaymentBtn.addEventListener("click", async function() {
       return;
     }
 
-    // 2️⃣ Paystack Inline
+    // Paystack Inline
     const handler = PaystackPop.setup({
-      key: data.publicKey, // from backend
+      key: data.publicKey,
       email: emailField ? emailField.value.trim() || "customer@example.com" : "customer@example.com",
-      amount: totalAmount * 100, // in kobo
+      amount: totalAmount * 100,
       currency: "NGN",
       ref: data.reference,
       onClose: function() {
@@ -789,7 +788,6 @@ proceedPaymentBtn.addEventListener("click", async function() {
         proceedPaymentBtn.disabled = false;
       },
       callback: function(response) {
-        // Async IIFE to allow await
         (async function verifyPayment() {
           try {
             const verifyRes = await fetch(`${backendURL}/api/payment/verify`, {
@@ -803,10 +801,12 @@ proceedPaymentBtn.addEventListener("click", async function() {
             if (verifyData.status === "success") {
               toast("Payment successful! Order confirmed.");
 
-              // Show order summary
+              // Show order summary **without clearing cart yet**
               orderSummaryDiv.style.display = "block";
               const itemsContainer = document.getElementById("summaryItems");
-              itemsContainer.innerHTML = cart.map(i => `<div>${i.name} x${i.qty} - ₦${formatNumber(i.qty*(i.rawPrice||normalizePrice(i.price)))}</div>`).join("");
+              itemsContainer.innerHTML = cart.map(i => 
+                `<div>${i.name} x${i.qty} - ₦${formatNumber(i.qty*(i.rawPrice||normalizePrice(i.price)))}</div>`
+              ).join("");
 
               document.getElementById("summaryTotal").innerHTML = `<strong>Total Paid: ₦${formatNumber(totalAmount)}</strong>`;
               document.getElementById("summaryDelivery").innerHTML = `
@@ -818,7 +818,7 @@ proceedPaymentBtn.addEventListener("click", async function() {
                 Mode: ${mode}
               `;
 
-              // WhatsApp button
+              // WhatsApp button **clears cart after sending**
               document.getElementById("sendOrderWhatsAppBtn").onclick = () => {
                 const message = `
 Hello Abby Secret,
@@ -837,13 +837,14 @@ Mode: ${mode}
 `;
                 const url = "https://wa.me/2349122054068?text=" + encodeURIComponent(message);
                 window.open(url, "_blank");
-              };
 
-              // Clear cart and hide cart/delivery form after summary is ready
-              cart = [];
-              saveCart();
-              hideCart();
-              deliveryForm.style.display = "none";
+                // Now clear cart & hide delivery form
+                cart = [];
+                saveCart();
+                hideCart();
+                deliveryForm.style.display = "none";
+                orderSummaryDiv.style.display = "none"; // optionally hide after WhatsApp
+              };
 
             } else {
               alert("Payment verification failed. Please contact support.");
@@ -853,7 +854,6 @@ Mode: ${mode}
             console.error(err);
             alert("Error verifying payment.");
           } finally {
-            // Re-enable button regardless of outcome
             proceedPaymentBtn.disabled = false;
           }
         })();
@@ -868,21 +868,6 @@ Mode: ${mode}
     proceedPaymentBtn.disabled = false;
   }
 });
-
-/* ---------- WhatsApp order for single item ---------- */
-function orderWhatsApp(product){
-  const message =
-`Hello Abby Secret,
-I would like to order this item:
-
-Item: ${product.name}
-Category: ${product.category}
-Price: ₦${product.price}
-Image: ${product.image}
-Ref: ${product._id || product.id}`;
-  const url = "https://wa.me/23479122054068?text=" + encodeURIComponent(message);
-  window.open(url, "_blank");
-}
 
 /* ---------- Inline Handler Globals ---------- */
 window.updateQty = updateQty;
