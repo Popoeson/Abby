@@ -834,13 +834,15 @@ proceedPaymentBtn.addEventListener("click", async function() {
 
               orderSummaryDiv.scrollIntoView({ behavior: "smooth" });
 
-              sendOrderWhatsAppBtn.onclick = () => {
-                const message = `
+              const sendOrderWhatsAppBtn = document.getElementById("sendOrderWhatsAppBtn");
+
+sendOrderWhatsAppBtn.onclick = () => {
+  const message = `
 Hello Abby Secret,
 I have placed an order:
 
 Items:
-${cart.map(i => \`- \${i.name} x\${i.qty}\`).join("\\n")}
+${cart.map(i => "- " + i.name + " x" + i.qty).join("\n")}
 
 Total Paid: ₦${formatNumber(totalAmount)}
 Delivery Details:
@@ -850,14 +852,15 @@ Phone: ${phone}
 Bus Stop: ${bus}
 Mode: ${mode}
 `;
-                const url = "https://wa.me/2349122054068?text=" + encodeURIComponent(message);
-                window.open(url, "_blank");
 
-                cart = [];
-                saveCart();
-                deliveryForm.style.display = "none";
-                orderSummaryDiv.style.display = "none";
-              };
+  const url = "https://wa.me/2349122054068?text=" + encodeURIComponent(message);
+  window.open(url, "_blank");
+
+  cart = [];
+  saveCart();
+  deliveryForm.style.display = "none";
+  orderSummaryDiv.style.display = "none";
+};
 
             } else {
               alert("Payment verification failed. Please contact support.");
