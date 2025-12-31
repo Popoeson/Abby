@@ -3,7 +3,6 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const multer = require("multer");
-const fetch = require("node-fetch"); // Needed for Paystack API calls
 const { v2: cloudinary } = require("cloudinary");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const app = express();
@@ -120,20 +119,13 @@ app.post("/api/payment/initiate", async (req, res) => {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
-  const reference = "abwy_" + Date.now(); // Unique reference for the transaction
+  const reference = "abwy_" + Date.now(); // Unique reference
   const paystackPayload = {
     email: "customer@example.com", // optional: you can pass email from form
     amount: amount * 100, // Paystack expects amount in kobo
     currency: "NGN",
     reference,
-    metadata: {
-      customer_name: name,
-      address,
-      phone,
-      bus,
-      mode,
-      cartItems
-    }
+    metadata: { customer_name: name, address, phone, bus, mode, cartItems }
   };
 
   try {
@@ -168,7 +160,7 @@ app.post("/api/payment/verify", async (req,res)=>{
     });
     const data = await response.json();
     if(data.status && data.data.status === "success"){
-      // Payment successful, you can save order in DB here if needed
+      // Payment successful, save order in DB if needed
       return res.json({ status: "success", message: "Payment verified" });
     }
     return res.json({ status: "failed", message: "Payment verification failed" });
