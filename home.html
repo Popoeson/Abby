@@ -743,7 +743,20 @@ function recalcDeliveryTotal(){
   deliveryTotal.innerText = "Total: ₦" + formatNumber(subtotal + deliveryFee);
 }
 
-// =========== PAYSTACK PAYMENT ===========
+/* ---------- ORDER VIA WHATSAPP (for modal "Order" button) ---------- */
+function orderWhatsApp(product){
+  // Add product to cart if not already
+  addToCartGeneric(product,1);
+
+  // Show delivery form
+  deliveryForm.style.display = "flex";
+  checkoutBtn.style.display = "none";
+
+  // Scroll to delivery form
+  deliveryForm.scrollIntoView({behavior:"smooth"});
+}
+
+/* ---------- PAYSTACK PAYMENT ---------- */
 proceedPaymentBtn.addEventListener("click", async function() {
   const name = document.getElementById("delName").value.trim();
   const address = document.getElementById("delAddress").value.trim();
@@ -764,7 +777,6 @@ proceedPaymentBtn.addEventListener("click", async function() {
   const totalAmount = subtotal + deliveryFee;
 
   try {
-    // Initiate payment on backend
     const res = await fetch(`${backendURL}/api/payment/initiate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -778,7 +790,6 @@ proceedPaymentBtn.addEventListener("click", async function() {
       return;
     }
 
-    // Paystack Inline
     const handler = PaystackPop.setup({
       key: data.publicKey,
       email: emailField ? emailField.value.trim() || "customer@example.com" : "customer@example.com",
@@ -803,7 +814,7 @@ proceedPaymentBtn.addEventListener("click", async function() {
             if (verifyData.status === "success") {
               toast("Payment successful! Order confirmed.");
 
-              // Show order summary **without clearing cart yet**
+              // Show order summary
               orderSummaryDiv.style.display = "block";
               const itemsContainer = document.getElementById("summaryItems");
               itemsContainer.innerHTML = cart.map(i => 
@@ -820,8 +831,8 @@ proceedPaymentBtn.addEventListener("click", async function() {
                 Mode: ${mode}
               `;
 
-              // WhatsApp button **clears cart after sending**
-              document.getElementById("sendOrderWhatsAppBtn").onclick = () => {
+              // WhatsApp button
+              sendOrderWhatsAppBtn.onclick = () => {
                 const message = `
 Hello Abby Secret,
 I have placed an order:
@@ -840,12 +851,12 @@ Mode: ${mode}
                 const url = "https://wa.me/2349122054068?text=" + encodeURIComponent(message);
                 window.open(url, "_blank");
 
-                // Now clear cart & hide delivery form
+                // Clear cart and hide forms
                 cart = [];
                 saveCart();
                 hideCart();
                 deliveryForm.style.display = "none";
-                orderSummaryDiv.style.display = "none"; // optionally hide after WhatsApp
+                orderSummaryDiv.style.display = "none";
               };
 
             } else {
