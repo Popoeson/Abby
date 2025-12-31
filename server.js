@@ -3,6 +3,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const multer = require("multer");
+const fetch = require("node-fetch"); // Needed for Paystack API calls
 const { v2: cloudinary } = require("cloudinary");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const app = express();
@@ -105,6 +106,75 @@ app.delete("/products/:id", async (req,res)=>{
   }catch(err){
     console.log(err);
     res.status(500).json({error:"Server error"});
+  }
+});
+
+// ----------------------------
+// PAYSTACK PAYMENT ROUTES
+// ----------------------------
+
+// Initiate payment
+app.post("/api/payment/initiate", async (req, res) => {
+  const { name, address, phone, bus, mode, cartItems, amount } = req.body;
+  if(!name || !address || !phone || !cartItems || !amount) {
+    return res.status(400).json({ error: "Missing required fields" });
+  }
+
+  const reference = "abwy_" + Date.now(); // Unique reference for the transaction
+  const paystackPayload = {
+    email: "customer@example.com", // optional: you can pass email from form
+    amount: amount * 100, // Paystack expects amount in kobo
+    currency: "NGN",
+    reference,
+    metadata: {
+      customer_name: name,
+      address,
+      phone,
+      bus,
+      mode,
+      cartItems
+    }
+  };
+
+  try {
+    const response = await fetch("https://api.paystack.co/transaction/initialize", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(paystackPayload)
+    });
+    const data = await response.json();
+    if(!data.status) return res.status(400).json({ error: "Paystack initialization failed" });
+
+    res.json({ reference, publicKey: process.env.PAYSTACK_PUBLIC_KEY });
+  } catch(err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error during payment initiation" });
+  }
+});
+
+// Verify payment
+app.post("/api/payment/verify", async (req,res)=>{
+  const { reference } = req.body;
+  if(!reference) return res.status(400).json({ error:"Reference required" });
+
+  try {
+    const response = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
+      headers: {
+        Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`
+      }
+    });
+    const data = await response.json();
+    if(data.status && data.data.status === "success"){
+      // Payment successful, you can save order in DB here if needed
+      return res.json({ status: "success", message: "Payment verified" });
+    }
+    return res.json({ status: "failed", message: "Payment verification failed" });
+  } catch(err){
+    console.error(err);
+    res.status(500).json({ error: "Server error during verification" });
   }
 });
 
