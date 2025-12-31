@@ -467,21 +467,23 @@ body{
 <!-- Paystack Inline Script -->
 <script src="https://js.paystack.co/v1/inline.js"></script>
 
-    <script>
+<script>
 const backendURL = "https://abby-vybw.onrender.com";
 const categories = ["All","Bubu","2 Piece","Jumpsuit","Jeans","Beach Wears","Gowns","Joggers","Top","Luxury Wear"];
 let products = [];
 let cart = loadCart();
 
-/* ---------- utilities ---------- */
+/* ---------- Utilities ---------- */
 function formatNumber(num){ 
   try{ return Number(num).toLocaleString(); }
   catch(e){ return String(num); } 
 }
+
 function escapeHtml(s){ 
   if(!s) return ""; 
   return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); 
 }
+
 function toast(msg){
   const t = document.createElement('div');
   t.innerText = msg;
@@ -497,22 +499,21 @@ function toast(msg){
   setTimeout(()=>{ t.style.transition='opacity .3s'; t.style.opacity='0'; setTimeout(()=>t.remove(),300); }, 1100);
 }
 
-/* ---------- cart helpers ---------- */
+/* ---------- Cart Helpers ---------- */
 function normalizePrice(priceStr){
   if(typeof priceStr === 'number') return priceStr;
   try{ return Number(String(priceStr).replace(/[^0-9.-]+/g,"")) || 0; }
   catch(e){ return 0; }
 }
 
-function updateCartUI(){
-  renderCartItems();
-}
+function updateCartUI(){ renderCartItems(); }
 
 function saveCart(){ 
   try{ localStorage.setItem('abbyCart', JSON.stringify(cart)); }
   catch(e){}
   updateCartUI();
 }
+
 function loadCart(){ 
   try{ 
     const raw = localStorage.getItem('abbyCart'); 
@@ -521,7 +522,7 @@ function loadCart(){
   }catch(e){ return []; } 
 }
 
-/* ---------- products & categories ---------- */
+/* ---------- Products & Categories ---------- */
 const categoryBar = document.getElementById("categoryBar");
 categoryBar.innerHTML = "";
 categories.forEach(cat=>{
@@ -569,7 +570,7 @@ function filterCategory(cat){
   renderProducts(filtered);
 }
 
-/* ---------- modal logic ---------- */
+/* ---------- Modal Logic ---------- */
 const modal = document.getElementById("modal");
 const modalAddBtn = document.getElementById("modalAddBtn");
 const modalOrderBtn = document.getElementById("modalOrderBtn");
@@ -602,7 +603,7 @@ modal.addEventListener("click", function(e){
   if (!e.target.closest(".modal-content")) closeModal();
 });
 
-/* ---------- cart functions ---------- */
+/* ---------- Cart Functions ---------- */
 function addToCartGeneric(product, qty){
   const id = product._id || product.id || product.id === 0 ? (product._id || product.id) : null;
   if(!id) return;
@@ -640,7 +641,7 @@ function clearCart(){
   renderCartItems();
 }
 
-/* ---------- cart drawer ---------- */
+/* ---------- Cart Drawer ---------- */
 const cartBtn = document.getElementById("cartBtn");
 const cartDrawer = document.getElementById("cartDrawer");
 const cartClose = document.getElementById("cartClose");
@@ -655,7 +656,7 @@ const deliveryTotal = document.getElementById("deliveryTotal");
 const proceedPaymentBtn = document.getElementById("proceedPaymentBtn");
 const orderSummaryDiv = document.getElementById("orderSummary");
 
-/* ---------- cart drawer events ---------- */
+/* ---------- Cart Drawer Events ---------- */
 cartBtn.addEventListener("click", ()=> showCart());
 cartClose.addEventListener("click", ()=> hideCart());
 
@@ -669,7 +670,7 @@ function hideCart(){
   cartDrawer.setAttribute("aria-hidden","true");
 }
 
-/* ---------- render cart items ---------- */
+/* ---------- Render Cart Items ---------- */
 function renderCartItems(){
   const container = cartItemsContainer;
   container.innerHTML = "";
@@ -717,65 +718,54 @@ function renderCartItems(){
   deliveryTotal.innerText = "Total: ₦" + formatNumber(total);
 }
 
-/* ---------- Step 1: Order Items opens delivery form ---------- */
+/* ---------- Checkout & Delivery ---------- */
 checkoutBtn.addEventListener("click", function(){
   if(!cart || cart.length===0){
     alert("Your cart is empty.");
     return;
   }
-
-  // Show the delivery form
   deliveryForm.style.display = "flex";
   deliveryTotal.innerText = cart.reduce((s,i)=>s+i.qty*(i.rawPrice||normalizePrice(i.price)),0);
-
-  // Hide the initial Order Items button and cart subtotal
   checkoutBtn.style.display = "none";
   cartSubtotalEl.style.display = "none";
 });
 
-/* recalc delivery total when mode changes */
 deliveryForm.querySelectorAll('input[name="deliveryMode"]').forEach(el=>{
   el.addEventListener("change", ()=> recalcDeliveryTotal());
 });
+
 function recalcDeliveryTotal(){
   let subtotal = cart.reduce((s,i)=>s+i.qty*(i.rawPrice||normalizePrice(i.price)),0);
   const mode = deliveryForm.querySelector('input[name="deliveryMode"]:checked').value;
-  let deliveryFee = mode==="door"?1500:0;
+  const deliveryFee = mode==="door"?1500:0;
   deliveryTotal.innerText = "Total: ₦" + formatNumber(subtotal + deliveryFee);
 }
 
-/* ---------- proceed to payment (Paystack) ---------- */
+/* ---------- Paystack Payment ---------- */
 proceedPaymentBtn.addEventListener("click", async function() {
   const name = document.getElementById("delName").value.trim();
   const address = document.getElementById("delAddress").value.trim();
   const phone = document.getElementById("delPhone").value.trim();
   const bus = document.getElementById("delBus").value.trim();
   const mode = deliveryForm.querySelector('input[name="deliveryMode"]:checked').value;
-  const emailField = document.getElementById("delEmail"); // optional email input
+  const emailField = document.getElementById("delEmail");
 
   if (!name || !address || !phone) {
     alert("Please fill in required delivery details.");
     return;
   }
 
-  // Calculate total including delivery fee
   const subtotal = cart.reduce((s, i) => s + i.qty * (i.rawPrice || normalizePrice(i.price)), 0);
   const deliveryFee = mode === "door" ? 1500 : 0;
   const totalAmount = subtotal + deliveryFee;
 
   try {
-    // 1️⃣ Send order details to backend to create a Paystack transaction
+    // 1️⃣ Initiate payment on backend
     const res = await fetch(`${backendURL}/api/payment/initiate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        name,
-        address,
-        phone,
-        bus,
-        mode,
-        cartItems: cart,
-        amount: totalAmount
+        name, address, phone, bus, mode, cartItems: cart, amount: totalAmount
       })
     });
     const data = await res.json();
@@ -784,19 +774,16 @@ proceedPaymentBtn.addEventListener("click", async function() {
       return;
     }
 
-    // 2️⃣ Open Paystack inline popup
+    // 2️⃣ Paystack Inline
     const handler = PaystackPop.setup({
-      key: data.publicKey, // from backend
+      key: data.publicKey,
       email: emailField ? emailField.value.trim() || "customer@example.com" : "customer@example.com",
-      amount: totalAmount * 100, // in kobo
+      amount: totalAmount * 100,
       currency: "NGN",
       ref: data.reference,
-      onClose: function() {
-        alert("Payment window closed.");
-      },
-      callback: async function(response) { // ✅ must be a proper function
+      onClose: function() { alert("Payment window closed."); },
+      callback: async function(response){
         try {
-          // 3️⃣ Verify payment on backend
           const verifyRes = await fetch(`${backendURL}/api/payment/verify`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -805,59 +792,30 @@ proceedPaymentBtn.addEventListener("click", async function() {
           const verifyData = await verifyRes.json();
           if (verifyData.status === "success") {
             toast("Payment successful! Order confirmed.");
-            // Optionally clear cart or redirect user
-            cart = [];
-            updateCartUI();
-          } else {
-            alert("Payment verification failed.");
-          }
-        } catch (err) {
-          console.error(err);
-          alert("Error verifying payment.");
-        }
-      }
-    });
 
-    handler.openIframe();
-  } catch (err) {
-    console.error(err);
-    alert("Error initiating payment. Try again.");
-  }
-});
-
-          // Hide cart and delivery form
-          hideCart();
-          deliveryForm.style.display = "none";
-
-          // Show order summary
-          orderSummaryDiv.style.display = "block";
-
-          // Populate summary
-          const itemsContainer = document.getElementById("summaryItems");
-          itemsContainer.innerHTML = cart.map(i=>`
-            <div>${i.name} x${i.qty} - ₦${formatNumber(i.qty*(i.rawPrice||normalizePrice(i.price)))}</div>
-          `).join("");
-
-          document.getElementById("summaryTotal").innerHTML = `<strong>Total Paid: ₦${formatNumber(subtotal + deliveryFee)}</strong>`;
-
-          document.getElementById("summaryDelivery").innerHTML = `
-            <strong>Delivery Details:</strong><br>
-            Name: ${name}<br>
-            Address: ${address}<br>
-            Phone: ${phone}<br>
-            Bus Stop: ${bus}<br>
-            Mode: ${mode}
-          `;
-
-          document.getElementById("sendOrderWhatsAppBtn").onclick = ()=> {
-            const message = `
+            // Show order summary
+            orderSummaryDiv.style.display = "block";
+            const itemsContainer = document.getElementById("summaryItems");
+            itemsContainer.innerHTML = cart.map(i=>`<div>${i.name} x${i.qty} - ₦${formatNumber(i.qty*(i.rawPrice||normalizePrice(i.price)))}</div>`).join("");
+            document.getElementById("summaryTotal").innerHTML = `<strong>Total Paid: ₦${formatNumber(totalAmount)}</strong>`;
+            document.getElementById("summaryDelivery").innerHTML = `
+              <strong>Delivery Details:</strong><br>
+              Name: ${name}<br>
+              Address: ${address}<br>
+              Phone: ${phone}<br>
+              Bus Stop: ${bus}<br>
+              Mode: ${mode}
+            `;
+            
+            document.getElementById("sendOrderWhatsAppBtn").onclick = ()=> {
+              const message = `
 Hello Abby Secret,
 I have placed an order:
 
 Items:
 ${cart.map(i=>`- ${i.name} x${i.qty}`).join("\n")}
 
-Total Paid: ₦${formatNumber(subtotal + deliveryFee)}
+Total Paid: ₦${formatNumber(totalAmount)}
 Delivery Details:
 Name: ${name}
 Address: ${address}
@@ -865,24 +823,33 @@ Phone: ${phone}
 Bus Stop: ${bus}
 Mode: ${mode}
 `;
-            const url = "https://wa.me/2347083276512?text=" + encodeURIComponent(message);
-            window.open(url, "_blank");
-          };
+              const url = "https://wa.me/2347083276512?text=" + encodeURIComponent(message);
+              window.open(url, "_blank");
+            };
 
-          // Clear cart
-          cart = [];
-          saveCart();
+            // Clear cart after order confirmed
+            cart = [];
+            saveCart();
 
-        } else {
-          alert("Payment verification failed. Please contact support.");
+            // Hide cart & delivery form
+            hideCart();
+            deliveryForm.style.display = "none";
+
+          } else {
+            alert("Payment verification failed. Please contact support.");
+          }
+        } catch(err){
+          console.error(err);
+          alert("Error verifying payment.");
         }
       }
     });
+
     handler.openIframe();
 
   } catch(err){
     console.error(err);
-    alert("An error occurred while processing payment.");
+    alert("Error initiating payment. Try again.");
   }
 });
 
@@ -897,12 +864,11 @@ Category: ${product.category}
 Price: ₦${product.price}
 Image: ${product.image}
 Ref: ${product._id || product.id}`;
-
   const url = "https://wa.me/2347083276512?text=" + encodeURIComponent(message);
   window.open(url, "_blank");
 }
 
-/* ---------- global assignments for inline handlers ---------- */
+/* ---------- Inline Handler Globals ---------- */
 window.updateQty = updateQty;
 window.removeFromCart = removeFromCart;
 window.addToCartFromCard = addToCartFromCard;
@@ -910,7 +876,7 @@ window.orderWhatsApp = orderWhatsApp;
 window.openModal = openModal;
 window.closeModal = closeModal;
 
-/* ---------- initial fetch & render ---------- */
+/* ---------- Initial Fetch & Render ---------- */
 fetchProducts();
 saveCart();
 </script>
