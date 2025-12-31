@@ -745,20 +745,21 @@ function recalcDeliveryTotal(){
 }
 
 /* ---------- proceed to payment (Paystack) ---------- */
-proceedPaymentBtn.addEventListener("click", async function(){
+proceedPaymentBtn.addEventListener("click", async function() {
   const name = document.getElementById("delName").value.trim();
   const address = document.getElementById("delAddress").value.trim();
   const phone = document.getElementById("delPhone").value.trim();
   const bus = document.getElementById("delBus").value.trim();
   const mode = deliveryForm.querySelector('input[name="deliveryMode"]:checked').value;
+  const emailField = document.getElementById("delEmail"); // optional email input
 
-  if(!name || !address || !phone){
+  if (!name || !address || !phone) {
     alert("Please fill in required delivery details.");
     return;
   }
 
   // Calculate total including delivery fee
-  let subtotal = cart.reduce((s,i)=>s+i.qty*(i.rawPrice||normalizePrice(i.price)),0);
+  const subtotal = cart.reduce((s, i) => s + i.qty * (i.rawPrice || normalizePrice(i.price)), 0);
   const deliveryFee = mode === "door" ? 1500 : 0;
   const totalAmount = subtotal + deliveryFee;
 
@@ -768,37 +769,61 @@ proceedPaymentBtn.addEventListener("click", async function(){
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        name, address, phone, bus, mode,
+        name,
+        address,
+        phone,
+        bus,
+        mode,
         cartItems: cart,
         amount: totalAmount
       })
     });
     const data = await res.json();
-    if(!data || !data.reference){
+    if (!data || !data.reference) {
       alert("Failed to initiate payment. Try again.");
       return;
     }
 
     // 2️⃣ Open Paystack inline popup
     const handler = PaystackPop.setup({
-      key: data.publicKey,        // Provided by your backend
-      email: "customer@example.com", // replace or ask for email
-      amount: totalAmount * 100,   // amount in kobo
+      key: data.publicKey, // from backend
+      email: emailField ? emailField.value.trim() || "customer@example.com" : "customer@example.com",
+      amount: totalAmount * 100, // in kobo
       currency: "NGN",
       ref: data.reference,
-      onClose: function(){
+      onClose: function() {
         alert("Payment window closed.");
       },
-      callback: async function(response){
-        // 3️⃣ Verify payment on backend
-        const verifyRes = await fetch(`${backendURL}/api/payment/verify`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ reference: response.reference })
-        });
-        const verifyData = await verifyRes.json();
-        if(verifyData.status === "success"){
-          toast("Payment successful! Order confirmed.");
+      callback: async function(response) { // ✅ must be a proper function
+        try {
+          // 3️⃣ Verify payment on backend
+          const verifyRes = await fetch(`${backendURL}/api/payment/verify`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ reference: response.reference })
+          });
+          const verifyData = await verifyRes.json();
+          if (verifyData.status === "success") {
+            toast("Payment successful! Order confirmed.");
+            // Optionally clear cart or redirect user
+            cart = [];
+            updateCartUI();
+          } else {
+            alert("Payment verification failed.");
+          }
+        } catch (err) {
+          console.error(err);
+          alert("Error verifying payment.");
+        }
+      }
+    });
+
+    handler.openIframe();
+  } catch (err) {
+    console.error(err);
+    alert("Error initiating payment. Try again.");
+  }
+});
 
           // Hide cart and delivery form
           hideCart();
