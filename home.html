@@ -454,15 +454,6 @@ body{
   </div>
 </div>
 
-<!-- ORDER SUMMARY (hidden by default) -->
-<div id="orderSummary" class="order-summary" style="display:none; padding:20px; max-width:600px; margin:20px auto; background:#fff; border-radius:10px; box-shadow:0 4px 10px rgba(0,0,0,0.2)">
-  <h2>Order Summary</h2>
-  <div id="summaryItems" style="margin:15px 0"></div>
-  <div id="summaryTotal" style="margin-bottom:15px; font-weight:600"></div>
-  <div id="summaryDelivery" style="margin-bottom:15px"></div>
-  <button id="sendOrderWhatsAppBtn" class="btn primary">Send Order to WhatsApp</button>
-</div>
-
 
 <!-- Paystack Inline Script -->
 <script src="https://js.paystack.co/v1/inline.js"></script>
@@ -470,7 +461,6 @@ body{
 <script>
 const backendURL = "https://abby-vybw.onrender.com";
 const categories = ["All","Bubu","2 Piece","Jumpsuit","Jeans","Beach Wears","Gowns","Joggers","Top","Luxury Wear"];
-const sendOrderWhatsAppBtn = document.getElementById("sendOrderWhatsAppBtn");
 
 let products = [];
 let cart = loadCart();
@@ -480,12 +470,10 @@ function formatNumber(num){
   try{ return Number(num).toLocaleString(); }
   catch(e){ return String(num); } 
 }
-
 function escapeHtml(s){ 
   if(!s) return ""; 
   return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); 
 }
-
 function toast(msg){
   const t = document.createElement('div');
   t.innerText = msg;
@@ -507,15 +495,12 @@ function normalizePrice(priceStr){
   try{ return Number(String(priceStr).replace(/[^0-9.-]+/g,"")) || 0; }
   catch(e){ return 0; }
 }
-
 function updateCartUI(){ renderCartItems(); }
-
 function saveCart(){ 
   try{ localStorage.setItem('abbyCart', JSON.stringify(cart)); }
   catch(e){}
   updateCartUI();
 }
-
 function loadCart(){ 
   try{ 
     const raw = localStorage.getItem('abbyCart'); 
@@ -656,7 +641,6 @@ const checkoutBtn = document.getElementById("checkoutBtn");
 const deliveryForm = document.getElementById("deliveryForm");
 const deliveryTotal = document.getElementById("deliveryTotal");
 const proceedPaymentBtn = document.getElementById("proceedPaymentBtn");
-const orderSummaryDiv = document.getElementById("orderSummary");
 
 /* ---------- Cart Drawer Events ---------- */
 cartBtn.addEventListener("click", ()=> showCart());
@@ -803,64 +787,17 @@ proceedPaymentBtn.addEventListener("click", async function() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ reference: response.reference })
             });
-
             const verifyData = await verifyRes.json();
 
             if (verifyData.status === "success") {
-              toast("Payment successful! Order confirmed.");
+              toast("Payment successful! Redirecting to summary...");
+              
+              // Save cart & order info to localStorage
+              localStorage.setItem("orderInfo", JSON.stringify({name,address,phone,bus,mode,totalAmount}));
+              localStorage.setItem("cart", JSON.stringify(cart));
 
-              // hide cart so summary is visible
-              hideCart();
-
-              // show order summary
-              orderSummaryDiv.style.display = "block";
-
-              const itemsContainer = document.getElementById("summaryItems");
-              itemsContainer.innerHTML = cart.map(i => 
-                `<div>${i.name} x${i.qty} - ₦${formatNumber(i.qty*(i.rawPrice||normalizePrice(i.price)))}</div>`
-              ).join("");
-
-              document.getElementById("summaryTotal").innerHTML =
-                `<strong>Total Paid: ₦${formatNumber(totalAmount)}</strong>`;
-
-              document.getElementById("summaryDelivery").innerHTML = `
-                <strong>Delivery Details:</strong><br>
-                Name: ${name}<br>
-                Address: ${address}<br>
-                Phone: ${phone}<br>
-                Bus Stop: ${bus}<br>
-                Mode: ${mode}
-              `;
-
-              orderSummaryDiv.scrollIntoView({ behavior: "smooth" });
-
-              const sendOrderWhatsAppBtn = document.getElementById("sendOrderWhatsAppBtn");
-
-sendOrderWhatsAppBtn.onclick = () => {
-  const message = `
-Hello Abby Secret,
-I have placed an order:
-
-Items:
-${cart.map(i => "- " + i.name + " x" + i.qty).join("\n")}
-Image: ${product.image}
-Total Paid: ₦${formatNumber(totalAmount)}
-Delivery Details:
-Name: ${name}
-Address: ${address}
-Phone: ${phone}
-Bus Stop: ${bus}
-Mode: ${mode}
-`;
-
-  const url = "https://wa.me/2349122054068?text=" + encodeURIComponent(message);
-  window.open(url, "_blank");
-
-  cart = [];
-  saveCart();
-  deliveryForm.style.display = "none";
-  orderSummaryDiv.style.display = "none";
-};
+              // Redirect to summary page
+              window.location.href = "summary.html";
 
             } else {
               alert("Payment verification failed. Please contact support.");
