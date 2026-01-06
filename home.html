@@ -840,12 +840,13 @@ saveCart();
   if (pending !== "true") return; // no pending order
 
   const banner = document.createElement("div");
-  banner.style.background = "#fff";
-  banner.style.border = "1px solid #ddd";
-  banner.style.padding = "12px";
-  banner.style.margin = "12px";
-  banner.style.borderRadius = "12px";
-  banner.style.boxShadow = "0 4px 12px rgba(0,0,0,.08)";
+  banner.style.background = "rgba(255,255,255,0.06)";  // glassy dark
+  banner.style.backdropFilter = "blur(12px)";
+  banner.style.border = "1px solid rgba(255,255,255,0.18)";
+  banner.style.padding = "16px";
+  banner.style.margin = "0";
+  banner.style.borderRadius = "16px";
+  banner.style.boxShadow = "0 6px 20px rgba(0,0,0,0.5)";
   banner.style.position = "fixed";
   banner.style.bottom = "20px";
   banner.style.left = "50%";
@@ -854,25 +855,37 @@ saveCart();
   banner.style.width = "90%";
   banner.style.maxWidth = "400px";
   banner.style.textAlign = "center";
+  banner.style.color = "white";
+  banner.style.fontFamily = "'Inter', sans-serif";
 
   banner.innerHTML = `
-    <strong>You still have a pending order.</strong><br>
-    <small>Please send it to WhatsApp before continuing shopping.</small><br><br>
+    <div style="font-weight:500; font-size:14px; margin-bottom:6px;">
+      You still have a pending order.
+    </div>
+    <div style="font-size:12px; color: rgba(255,255,255,0.7); margin-bottom:12px;">
+      Please send it to WhatsApp before continuing shopping.
+    </div>
     <button id="resumeOrderBtn" style="
-      background:#25d366;
-      color:#fff;
-      border:none;
-      padding:10px 14px;
-      border-radius:10px;
-      width:100%;
-      font-size:15px;
-      cursor:pointer;
+      background: #d4af37;          /* gold accent */
+      color: black;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 12px;
+      width: 100%;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
     ">Resume Order</button>
   `;
 
   document.body.appendChild(banner);
 
-  document.getElementById("resumeOrderBtn").onclick = () => {
+  const resumeBtn = document.getElementById("resumeOrderBtn");
+  resumeBtn.addEventListener("mouseenter", () => resumeBtn.style.background = "#c9a933");
+  resumeBtn.addEventListener("mouseleave", () => resumeBtn.style.background = "#d4af37");
+
+  resumeBtn.onclick = () => {
     window.location.href = "summary.html";
   };
 })();
