@@ -168,57 +168,38 @@ h3{ color:var(--gold); font-weight:600; margin-bottom:6px; }
 
 <script>
 /* ---------------- HELPERS ---------------- */
-function formatNumber(n) {
-  return Number(n).toLocaleString();
-}
-
-function load(key, fallback) {
-  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
-  catch { return fallback; }
-}
+function formatNumber(n) { return Number(n).toLocaleString(); }
+function load(key,fallback){ try{ return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch{ return fallback; } }
 
 /* ---------------- LOAD DATA ---------------- */
-let cart = load("cart", []);
-let orderInfo = load("orderInfo", {});
+let cart = load("abbyCart", []); // use same key as home cart
+let orderInfo = load("orderInfo", {}); 
 
-/* ---------- DOM ELEMENTS ---------- */
 const summaryItems = document.getElementById("summaryItems");
 const summaryTotal = document.getElementById("summaryTotal");
 const summaryDelivery = document.getElementById("summaryDelivery");
-const sendOrderWhatsAppBtn = document.getElementById("sendOrderWhatsAppBtn");
 
-/* ---------- RENDER SUMMARY ---------- */
-function renderSummary() {
-  if (!cart || cart.length === 0) {
-    summaryItems.innerHTML = "<p>Your cart is empty.</p>";
-    summaryTotal.innerHTML = "";
-    summaryDelivery.innerHTML = "";
-    sendOrderWhatsAppBtn.style.display = "none";
-    return;
-  }
-
-  summaryItems.innerHTML = cart.map((i, index) => `
-    <div class="item" data-index="${index}">
-      <strong>${i.name}</strong> x${i.qty}<br>
-      ₦${formatNumber((i.rawPrice || 0) * i.qty)}<br>
-      <small style="color:#777">Tap to preview</small>
+/* ---------- RENDER SUMMARY ITEMS ---------- */
+summaryItems.innerHTML = cart.map((i,index)=>`
+  <div class="item" data-index="${index}">
+    <img class="item-thumb" src="${i.image || ''}" alt="${i.name}">
+    <div class="item-details">
+      <div class="item-name">${i.name}</div>
+      <div class="item-qty">Quantity: ${i.qty}</div>
+      <div class="item-price">₦${formatNumber((i.rawPrice||0)*i.qty)}</div>
+      <small style="color:var(--muted)">Tap to preview</small>
     </div>
-  `).join("");
+  </div>
+`).join("");
 
-  summaryTotal.innerHTML = `<strong>Total Paid: ₦${formatNumber(orderInfo.totalAmount || 0)}</strong>`;
-
-  summaryDelivery.innerHTML = `
-    Name: ${orderInfo.name || ""}<br>
-    Address: ${orderInfo.address || ""}<br>
-    Phone: ${orderInfo.phone || ""}<br>
-    Bus Stop: ${orderInfo.bus || ""}<br>
-    Mode: ${orderInfo.mode || ""}
-  `;
-
-  sendOrderWhatsAppBtn.style.display = "block";
-}
-
-renderSummary();
+summaryTotal.innerHTML = `<strong>Total Paid: ₦${formatNumber(orderInfo.totalAmount||0)}</strong>`;
+summaryDelivery.innerHTML = `
+  Name: ${orderInfo.name||""}<br>
+  Address: ${orderInfo.address||""}<br>
+  Phone: ${orderInfo.phone||""}<br>
+  Bus Stop: ${orderInfo.bus||""}<br>
+  Mode: ${orderInfo.mode||""}
+`;
 
 /* ---------- PREVIEW MODAL ---------- */
 const modal = document.getElementById("previewModal");
@@ -228,60 +209,49 @@ const previewName = document.getElementById("previewName");
 const previewQty = document.getElementById("previewQty");
 const previewPrice = document.getElementById("previewPrice");
 
-document.querySelectorAll(".item").forEach(el => {
-  el.onclick = () => {
+document.querySelectorAll(".item").forEach(el=>{
+  el.onclick = ()=>{
     const i = cart[el.dataset.index];
     previewImage.src = i.image || "";
     previewName.textContent = i.name;
-    previewQty.textContent = "Quantity: " + i.qty;
-    previewPrice.textContent = "Total: ₦" + formatNumber((i.rawPrice || 0) * i.qty);
+    previewQty.textContent = "Quantity: "+i.qty;
+    previewPrice.textContent = "Total: ₦"+formatNumber((i.rawPrice||0)*i.qty);
     modal.style.display = "flex";
   };
 });
 
-closePreview.onclick = () => modal.style.display = "none";
-modal.onclick = e => { if (e.target === modal) modal.style.display = "none"; };
+closePreview.onclick = ()=> modal.style.display="none";
+modal.onclick = e=>{ if(e.target===modal) modal.style.display="none"; };
 
 /* ---------- WHATSAPP SEND ---------- */
-sendOrderWhatsAppBtn.onclick = () => {
+const sendOrderWhatsAppBtn = document.getElementById("sendOrderWhatsAppBtn");
+sendOrderWhatsAppBtn.onclick = ()=>{
   const message = `
 Hello Abby Secret,
 I have placed an order:
 
 Items:
-${cart.map(i => "- " + i.name + " x" + i.qty + " (Image: " + i.image + ")").join("\n")}
+${cart.map(i => "- " + i.name + " x" + i.qty + "\nImage: " + i.image).join("\n\n")}
 
-Total Paid: ₦${formatNumber(orderInfo.totalAmount || 0)}
+Total Paid: ₦${formatNumber(orderInfo.totalAmount||0)}
 
 Delivery Details:
-Name: ${orderInfo.name || ""}
-Address: ${orderInfo.address || ""}
-Phone: ${orderInfo.phone || ""}
-Bus Stop: ${orderInfo.bus || ""}
-Mode: ${orderInfo.mode || ""}
+Name: ${orderInfo.name||""}
+Address: ${orderInfo.address||""}
+Phone: ${orderInfo.phone||""}
+Bus Stop: ${orderInfo.bus||""}
+Mode: ${orderInfo.mode||""}
 `;
 
-  const url = "https://wa.me/2349122054068?text=" + encodeURIComponent(message);
-  window.open(url, "_blank");
+  const url = "https://wa.me/2349122054068?text="+encodeURIComponent(message);
+  window.open(url,"_blank");
 };
 
-/* ---------- RESUME ORDER ON PAGE LOAD ---------- */
-window.addEventListener("load", () => {
-  // Re-render summary items for click preview after page reload
-  document.querySelectorAll(".item").forEach(el => {
-    el.onclick = () => {
-      const i = cart[el.dataset.index];
-      previewImage.src = i.image || "";
-      previewName.textContent = i.name;
-      previewQty.textContent = "Quantity: " + i.qty;
-      previewPrice.textContent = "Total: ₦" + formatNumber((i.rawPrice || 0) * i.qty);
-      modal.style.display = "flex";
-    };
-  });
-
-  // Hide WhatsApp button if no cart
-  if (!cart || cart.length === 0) sendOrderWhatsAppBtn.style.display = "none";
-});
+/* ---------- BACK TO HOME ---------- */
+document.getElementById("backHomeBtn").onclick = ()=>{
+  window.location.href = "home.html";
+};
 </script>
+
 </body>
 </html>
