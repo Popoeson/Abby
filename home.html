@@ -833,6 +833,41 @@ window.closeModal = closeModal;
 /* ---------- Initial Fetch & Render ---------- */
 fetchProducts();
 saveCart();
+
+/* ---------- Resume Pending Order Banner ---------- */
+(function () {
+  const pending = localStorage.getItem("pendingOrder");
+  if (pending !== "true") return;
+
+  const banner = document.createElement("div");
+  banner.style.background = "#fff";
+  banner.style.border = "1px solid #ddd";
+  banner.style.padding = "12px";
+  banner.style.margin = "12px";
+  banner.style.borderRadius = "12px";
+  banner.style.boxShadow = "0 4px 12px rgba(0,0,0,.08)";
+
+  banner.innerHTML = `
+    <strong>You still have an order summary.</strong><br>
+    <small>You can open it again and send it to WhatsApp.</small><br><br>
+
+    <button id="resumeOrderBtn" style="
+      background:#25d366;
+      color:#fff;
+      border:none;
+      padding:10px 14px;
+      border-radius:10px;
+      width:100%;
+      font-size:15px;
+    ">Resume Order</button>
+  `;
+
+  document.body.prepend(banner);
+
+  document.getElementById("resumeOrderBtn").onclick = () => {
+    window.location.href = "summary.html";
+  };
+})();
 </script>
 </body>
 </html>
