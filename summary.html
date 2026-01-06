@@ -231,7 +231,7 @@ Hello Abby Secret,
 I have placed an order:
 
 Items:
-${cart.map(i => "- " + i.name + " x" + i.qty + " (Image: "+i.image+")").join("\n")}
+${cart.map(i => "- " + i.name + " x" + i.qty + " - Image: " + i.image + ")").join("\n")}
 
 Total Paid: ₦${formatNumber(orderInfo.totalAmount||0)}
 
