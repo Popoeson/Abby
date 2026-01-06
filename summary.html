@@ -239,6 +239,8 @@ modal.onclick = e=>{ if(e.target===modal) modal.style.display="none"; };
 
 /* ---------- WHATSAPP SEND ---------- */
 sendOrderWhatsAppBtn.onclick = ()=>{
+  if(!cart || cart.length===0) return;
+
   const message = `
 Hello Abby Secret,
 I have placed an order:
@@ -258,10 +260,22 @@ Mode: ${orderInfo.mode||""}
 
   const url = "https://wa.me/2349122054068?text="+encodeURIComponent(message);
   window.open(url,"_blank");
+
+  // Mark the pending order as completed
+  localStorage.setItem("pendingOrder","false");
+  toast("Order sent! You can continue shopping."); // optional toast
 };
 
 /* ---------- BACK TO HOME ---------- */
 document.getElementById("backHomeBtn").onclick = ()=>{
+  if(localStorage.getItem("pendingOrder") === "true"){
+    const confirmResume = confirm("You haven't sent your order yet. Do you want to send it before leaving?");
+    if(confirmResume){
+      sendOrderWhatsAppBtn.click(); // trigger WhatsApp send
+      return;
+    }
+  }
+  // go back home
   window.location.href = "home.html";
 };
 
