@@ -172,34 +172,59 @@ function formatNumber(n) { return Number(n).toLocaleString(); }
 function load(key,fallback){ try{ return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch{ return fallback; } }
 
 /* ---------------- LOAD DATA ---------------- */
-let cart = load("abbyCart", []); // use same key as home cart
+let cart = load("abbyCart", []); // use same key as homepage cart
 let orderInfo = load("orderInfo", {}); 
 
 const summaryItems = document.getElementById("summaryItems");
 const summaryTotal = document.getElementById("summaryTotal");
 const summaryDelivery = document.getElementById("summaryDelivery");
+const sendOrderWhatsAppBtn = document.getElementById("sendOrderWhatsAppBtn");
 
-/* ---------- RENDER SUMMARY ITEMS ---------- */
-summaryItems.innerHTML = cart.map((i,index)=>`
-  <div class="item" data-index="${index}">
-    <img class="item-thumb" src="${i.image || ''}" alt="${i.name}">
-    <div class="item-details">
-      <div class="item-name">${i.name}</div>
-      <div class="item-qty">Quantity: ${i.qty}</div>
-      <div class="item-price">₦${formatNumber((i.rawPrice||0)*i.qty)}</div>
-      <small style="color:var(--muted)">Tap to preview</small>
+/* ---------- RENDER SUMMARY ---------- */
+function renderSummary() {
+  if(!cart || cart.length===0){
+    summaryItems.innerHTML = "<p>Your cart is empty.</p>";
+    summaryTotal.innerHTML = "";
+    summaryDelivery.innerHTML = "";
+    sendOrderWhatsAppBtn.style.display = "none";
+    return;
+  }
+
+  summaryItems.innerHTML = cart.map((i,index)=>`
+    <div class="item" data-index="${index}">
+      <img class="item-thumb" src="${i.image || ''}" alt="${i.name}">
+      <div class="item-details">
+        <div class="item-name">${i.name}</div>
+        <div class="item-qty">Quantity: ${i.qty}</div>
+        <div class="item-price">₦${formatNumber((i.rawPrice||0)*i.qty)}</div>
+        <small style="color:var(--muted)">Tap to preview</small>
+      </div>
     </div>
-  </div>
-`).join("");
+  `).join("");
 
-summaryTotal.innerHTML = `<strong>Total Paid: ₦${formatNumber(orderInfo.totalAmount||0)}</strong>`;
-summaryDelivery.innerHTML = `
-  Name: ${orderInfo.name||""}<br>
-  Address: ${orderInfo.address||""}<br>
-  Phone: ${orderInfo.phone||""}<br>
-  Bus Stop: ${orderInfo.bus||""}<br>
-  Mode: ${orderInfo.mode||""}
-`;
+  summaryTotal.innerHTML = `<strong>Total Paid: ₦${formatNumber(orderInfo.totalAmount||0)}</strong>`;
+  summaryDelivery.innerHTML = `
+    Name: ${orderInfo.name||""}<br>
+    Address: ${orderInfo.address||""}<br>
+    Phone: ${orderInfo.phone||""}<br>
+    Bus Stop: ${orderInfo.bus||""}<br>
+    Mode: ${orderInfo.mode||""}
+  `;
+
+  sendOrderWhatsAppBtn.style.display = "block";
+
+  // Attach click handlers for preview modal
+  document.querySelectorAll(".item").forEach(el=>{
+    el.onclick = ()=>{
+      const i = cart[el.dataset.index];
+      previewImage.src = i.image || "";
+      previewName.textContent = i.name;
+      previewQty.textContent = "Quantity: "+i.qty;
+      previewPrice.textContent = "Total: ₦"+formatNumber((i.rawPrice||0)*i.qty);
+      modal.style.display = "flex";
+    };
+  });
+}
 
 /* ---------- PREVIEW MODAL ---------- */
 const modal = document.getElementById("previewModal");
@@ -209,22 +234,10 @@ const previewName = document.getElementById("previewName");
 const previewQty = document.getElementById("previewQty");
 const previewPrice = document.getElementById("previewPrice");
 
-document.querySelectorAll(".item").forEach(el=>{
-  el.onclick = ()=>{
-    const i = cart[el.dataset.index];
-    previewImage.src = i.image || "";
-    previewName.textContent = i.name;
-    previewQty.textContent = "Quantity: "+i.qty;
-    previewPrice.textContent = "Total: ₦"+formatNumber((i.rawPrice||0)*i.qty);
-    modal.style.display = "flex";
-  };
-});
-
 closePreview.onclick = ()=> modal.style.display="none";
 modal.onclick = e=>{ if(e.target===modal) modal.style.display="none"; };
 
 /* ---------- WHATSAPP SEND ---------- */
-const sendOrderWhatsAppBtn = document.getElementById("sendOrderWhatsAppBtn");
 sendOrderWhatsAppBtn.onclick = ()=>{
   const message = `
 Hello Abby Secret,
@@ -251,7 +264,9 @@ Mode: ${orderInfo.mode||""}
 document.getElementById("backHomeBtn").onclick = ()=>{
   window.location.href = "home.html";
 };
-</script>
 
+/* ---------- INITIAL RENDER ---------- */
+window.addEventListener("load", renderSummary);
+</script>
 </body>
 </html>
