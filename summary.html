@@ -167,32 +167,31 @@ h3{ color:var(--gold); font-weight:600; margin-bottom:6px; }
 </div>
 
 <script>
-/* ---------------- HELPERS ---------------- */
-function formatNumber(n) { return Number(n).toLocaleString(); }
+function formatNumber(n){ return Number(n).toLocaleString(); }
 function load(key,fallback){ try{ return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch{ return fallback; } }
 
-/* ---------------- LOAD DATA ---------------- */
-let cart = load("abbyCart", []); // use same key as homepage cart
-let orderInfo = load("orderInfo", {}); 
+let cart = load("abbyCart", []);
+let orderInfo = load("orderInfo", {});
 
 const summaryItems = document.getElementById("summaryItems");
 const summaryTotal = document.getElementById("summaryTotal");
 const summaryDelivery = document.getElementById("summaryDelivery");
 const sendOrderWhatsAppBtn = document.getElementById("sendOrderWhatsAppBtn");
 
+/* ---- mark order as pending when summary loads ---- */
+localStorage.setItem("pendingOrder","true");
+
 /* ---------- RENDER SUMMARY ---------- */
-function renderSummary() {
+function renderSummary(){
   if(!cart || cart.length===0){
     summaryItems.innerHTML = "<p>Your cart is empty.</p>";
-    summaryTotal.innerHTML = "";
-    summaryDelivery.innerHTML = "";
     sendOrderWhatsAppBtn.style.display = "none";
     return;
   }
 
   summaryItems.innerHTML = cart.map((i,index)=>`
     <div class="item" data-index="${index}">
-      <img class="item-thumb" src="${i.image || ''}" alt="${i.name}">
+      <img class="item-thumb" src="${i.image||''}">
       <div class="item-details">
         <div class="item-name">${i.name}</div>
         <div class="item-qty">Quantity: ${i.qty}</div>
@@ -211,34 +210,31 @@ function renderSummary() {
     Mode: ${orderInfo.mode||""}
   `;
 
-  sendOrderWhatsAppBtn.style.display = "block";
-
-  // Attach click handlers for preview modal
   document.querySelectorAll(".item").forEach(el=>{
     el.onclick = ()=>{
       const i = cart[el.dataset.index];
-      previewImage.src = i.image || "";
+      previewImage.src = i.image||"";
       previewName.textContent = i.name;
       previewQty.textContent = "Quantity: "+i.qty;
       previewPrice.textContent = "Total: ₦"+formatNumber((i.rawPrice||0)*i.qty);
-      modal.style.display = "flex";
+      modal.style.display="flex";
     };
   });
 }
 
 /* ---------- PREVIEW MODAL ---------- */
-const modal = document.getElementById("previewModal");
-const closePreview = document.getElementById("closePreview");
-const previewImage = document.getElementById("previewImage");
-const previewName = document.getElementById("previewName");
-const previewQty = document.getElementById("previewQty");
-const previewPrice = document.getElementById("previewPrice");
+const modal=document.getElementById("previewModal");
+const closePreview=document.getElementById("closePreview");
+const previewImage=document.getElementById("previewImage");
+const previewName=document.getElementById("previewName");
+const previewQty=document.getElementById("previewQty");
+const previewPrice=document.getElementById("previewPrice");
 
-closePreview.onclick = ()=> modal.style.display="none";
-modal.onclick = e=>{ if(e.target===modal) modal.style.display="none"; };
+closePreview.onclick=()=> modal.style.display="none";
+modal.onclick=e=>{ if(e.target===modal) modal.style.display="none"; };
 
 /* ---------- WHATSAPP SEND ---------- */
-sendOrderWhatsAppBtn.onclick = ()=>{
+sendOrderWhatsAppBtn.onclick=()=>{
   if(!cart || cart.length===0) return;
 
   const message = `
@@ -246,7 +242,7 @@ Hello Abby Secret,
 I have placed an order:
 
 Items:
-${cart.map(i => "- " + i.name + " x" + i.qty + "\nImage: " + i.image).join("\n\n")}
+${cart.map(i=>"- "+i.name+" x"+i.qty+"\nImage: "+i.image).join("\n\n")}
 
 Total Paid: ₦${formatNumber(orderInfo.totalAmount||0)}
 
@@ -258,28 +254,21 @@ Bus Stop: ${orderInfo.bus||""}
 Mode: ${orderInfo.mode||""}
 `;
 
-  const url = "https://wa.me/2349122054068?text="+encodeURIComponent(message);
-  window.open(url,"_blank");
+  window.open("https://wa.me/2349122054068?text="+encodeURIComponent(message),"_blank");
 
-  // Mark the pending order as completed
-  localStorage.setItem("pendingOrder","false");
-  toast("Order sent! You can continue shopping."); // optional toast
+  // order completed — clear pending flag (DO NOT clear cart here!)
+  localStorage.removeItem("pendingOrder");
 };
 
 /* ---------- BACK TO HOME ---------- */
-document.getElementById("backHomeBtn").onclick = ()=>{
-  if(localStorage.getItem("pendingOrder") === "true"){
-    const confirmResume = confirm("You haven't sent your order yet. Do you want to send it before leaving?");
-    if(confirmResume){
-      sendOrderWhatsAppBtn.click(); // trigger WhatsApp send
-      return;
-    }
+document.getElementById("backHomeBtn").onclick=()=>{
+  if(localStorage.getItem("pendingOrder")==="true"){
+    const confirmSend = confirm("You haven't sent your order yet. Do you want to send it now?");
+    if(confirmSend){ sendOrderWhatsAppBtn.click(); return; }
   }
-  // go back home
-  window.location.href = "home.html";
+  window.location.href="home.html";
 };
 
-/* ---------- INITIAL RENDER ---------- */
 window.addEventListener("load", renderSummary);
 </script>
 </body>
