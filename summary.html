@@ -5,63 +5,106 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Order Summary — Abby Secret</title>
 
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
 <style>
-  body {
-    font-family: Arial, Helvetica, sans-serif;
-    background:#f6f6f6;
-    margin:0;
-    padding:0;
-  }
+:root{
+  --bg-gradient: linear-gradient(to bottom, #000000, #1a1a1a);
+  --glass-bg: rgba(255,255,255,0.06);
+  --glass-border: rgba(255,255,255,0.18);
+  --gold: #d4af37;
+  --muted: rgba(255,255,255,0.7);
+  --radius: 16px;
+  --shadow: rgba(0,0,0,0.5);
+}
 
-  .wrapper {
-    max-width: 850px;
-    margin: 20px auto;
-    background:#fff;
-    border-radius:14px;
-    padding:18px;
-    box-shadow:0 4px 14px rgba(0,0,0,.1);
-  }
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family: 'Inter', sans-serif;
+  background: var(--bg-gradient);
+  color:white;
+  font-size:14px;
+  font-weight:300;
+  line-height:1.4;
+}
 
-  h2 { margin-top:0; }
+.wrapper{
+  max-width:900px;
+  margin:20px auto;
+  background: var(--glass-bg);
+  border:1px solid var(--glass-border);
+  backdrop-filter: blur(12px);
+  border-radius: var(--radius);
+  padding:18px;
+  box-shadow: 0 6px 20px var(--shadow);
+}
 
-  .item {
-    padding:10px 12px;
-    border:1px solid #ddd;
-    border-radius:10px;
-    margin-bottom:8px;
-    cursor:pointer;
-    background:#fafafa;
-  }
+h2{ margin-top:0; color:var(--gold); font-weight:700; font-size:20px; }
+h3{ color:var(--gold); font-weight:600; margin-bottom:6px; }
 
-  .item:hover {
-    background:#f0f0f0;
-  }
+.item{
+  display:flex;
+  gap:12px;
+  align-items:center;
+  padding:10px 12px;
+  border:1px solid var(--glass-border);
+  border-radius:12px;
+  margin-bottom:10px;
+  background: var(--glass-bg);
+  cursor:pointer;
+  transition: transform .2s, box-shadow .2s;
+}
+.item:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.6);
+}
+.item-thumb{
+  width:64px;
+  height:64px;
+  border-radius:12px;
+  object-fit:cover;
+  flex-shrink:0;
+  border:1px solid var(--glass-border);
+}
+.item-details{
+  flex:1;
+}
+.item-name{ font-weight:500; font-size:14px; }
+.item-qty, .item-price{ font-size:13px; color:var(--muted); }
 
-  .section {
-    margin-top:20px;
-  }
+.section{
+  margin-top:20px;
+}
 
-  .btn {
-    display:block;
-    width:100%;
-    padding:12px;
-    text-align:center;
-    background:#25d366;
-    color:#fff;
-    border:none;
-    border-radius:10px;
-    font-size:16px;
-    margin-top:10px;
-  }
+.btn{
+  display:block;
+  width:100%;
+  padding:12px;
+  text-align:center;
+  background: var(--gold);
+  color:black;
+  border:none;
+  border-radius:10px;
+  font-size:16px;
+  margin-top:12px;
+  cursor:pointer;
+  font-weight:600;
+}
+.btn:hover{ background: #c9a933; }
+.btn-back{ background: rgba(255,255,255,0.06); color:white; margin-top:8px; }
+.btn-back:hover{ background: rgba(255,255,255,0.12); }
 
-  .btn:active { opacity:.8; }
+@media(max-width:520px){
+  .wrapper{ width:95%; padding:14px; }
+  .item-thumb{ width:56px; height:56px; }
+}
 </style>
 </head>
 
 <body>
 
 <div class="wrapper">
-
   <h2>Order Summary</h2>
 
   <div id="summaryItems"></div>
@@ -76,136 +119,137 @@
     <div id="summaryDelivery"></div>
   </div>
 
-  <button id="sendOrderWhatsAppBtn" class="btn">
-    Send Order on WhatsApp
-  </button>
-
+  <button id="sendOrderWhatsAppBtn" class="btn">Send Order on WhatsApp</button>
+  <button id="backHomeBtn" class="btn btn-back">Back to Home</button>
 </div>
 
 <!-- PRODUCT PREVIEW MODAL -->
 <div id="previewModal" style="
   position:fixed;
   inset:0;
-  background:rgba(0,0,0,.6);
+  background:rgba(0,0,0,.78);
   display:none;
   align-items:center;
   justify-content:center;
   z-index:1000;
+  padding:12px;
+  overflow-y:auto;
 ">
   <div style="
-    background:#fff;
+    background: var(--glass-bg);
+    border:1px solid var(--glass-border);
+    backdrop-filter: blur(14px);
     max-width:420px;
     width:90%;
     border-radius:14px;
     padding:18px;
+    text-align:left;
     box-shadow:0 6px 20px rgba(0,0,0,.25);
+    position:relative;
+    margin:0 auto;
   ">
-    <img id="previewImage" src="" style="width:100%; border-radius:10px; margin-bottom:10px">
-    <h3 id="previewName" style="margin:6px 0"></h3>
-    <p id="previewQty" style="margin:4px 0"></p>
-    <p id="previewPrice" style="margin:4px 0; font-weight:600"></p>
+    <img id="previewImage" src="" style="width:100%; border-radius:12px; margin-bottom:10px">
+    <h3 id="previewName" style="color:var(--gold); margin:6px 0"></h3>
+    <p id="previewQty" style="color:white; margin:4px 0"></p>
+    <p id="previewPrice" style="color:white; margin:4px 0; font-weight:600"></p>
 
     <button id="closePreview" style="
       width:100%;
       padding:10px;
       margin-top:10px;
       background:#222;
-      color:#fff;
+      color:white;
       border:none;
       border-radius:8px;
+      cursor:pointer;
     ">Close</button>
   </div>
 </div>
 
 <script>
 /* ---------------- HELPERS ---------------- */
-function formatNumber(n) {
-  return Number(n).toLocaleString();
-}
-
-function load(key, fallback) {
-  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
-  catch { return fallback; }
-}
+function formatNumber(n) { return Number(n).toLocaleString(); }
+function load(key,fallback){ try{ return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch{ return fallback; } }
 
 /* ---------------- LOAD DATA ---------------- */
-let cart = load("cart", []);
+let cart = load("abbyCart", []); // use same key as home cart
 let orderInfo = load("orderInfo", {}); 
-// orderInfo should contain: name, address, phone, bus, mode, totalAmount, deliveryFee
 
 const summaryItems = document.getElementById("summaryItems");
 const summaryTotal = document.getElementById("summaryTotal");
 const summaryDelivery = document.getElementById("summaryDelivery");
 
-/* ---------- RENDER SUMMARY ---------- */
-summaryItems.innerHTML = cart.map((i, index) => `
+/* ---------- RENDER SUMMARY ITEMS ---------- */
+summaryItems.innerHTML = cart.map((i,index)=>`
   <div class="item" data-index="${index}">
-    <strong>${i.name}</strong> x${i.qty}<br>
-    ₦${formatNumber((i.rawPrice || 0) * i.qty)}<br>
-    <small style="color:#777">Tap to preview</small>
+    <img class="item-thumb" src="${i.image || ''}" alt="${i.name}">
+    <div class="item-details">
+      <div class="item-name">${i.name}</div>
+      <div class="item-qty">Quantity: ${i.qty}</div>
+      <div class="item-price">₦${formatNumber((i.rawPrice||0)*i.qty)}</div>
+      <small style="color:var(--muted)">Tap to preview</small>
+    </div>
   </div>
 `).join("");
 
-summaryTotal.innerHTML = `
-  <strong>Total Paid: ₦${formatNumber(orderInfo.totalAmount || 0)}</strong>
-`;
-
+summaryTotal.innerHTML = `<strong>Total Paid: ₦${formatNumber(orderInfo.totalAmount||0)}</strong>`;
 summaryDelivery.innerHTML = `
-  Name: ${orderInfo.name || ""}<br>
-  Address: ${orderInfo.address || ""}<br>
-  Phone: ${orderInfo.phone || ""}<br>
-  Bus Stop: ${orderInfo.bus || ""}<br>
-  Mode: ${orderInfo.mode || ""}
+  Name: ${orderInfo.name||""}<br>
+  Address: ${orderInfo.address||""}<br>
+  Phone: ${orderInfo.phone||""}<br>
+  Bus Stop: ${orderInfo.bus||""}<br>
+  Mode: ${orderInfo.mode||""}
 `;
 
 /* ---------- PREVIEW MODAL ---------- */
 const modal = document.getElementById("previewModal");
 const closePreview = document.getElementById("closePreview");
-
 const previewImage = document.getElementById("previewImage");
 const previewName = document.getElementById("previewName");
 const previewQty = document.getElementById("previewQty");
 const previewPrice = document.getElementById("previewPrice");
 
-document.querySelectorAll(".item").forEach(el => {
-  el.onclick = () => {
+document.querySelectorAll(".item").forEach(el=>{
+  el.onclick = ()=>{
     const i = cart[el.dataset.index];
-
     previewImage.src = i.image || "";
     previewName.textContent = i.name;
-    previewQty.textContent = "Quantity: " + i.qty;
-    previewPrice.textContent = "Total: ₦" + formatNumber((i.rawPrice || 0) * i.qty);
-
+    previewQty.textContent = "Quantity: "+i.qty;
+    previewPrice.textContent = "Total: ₦"+formatNumber((i.rawPrice||0)*i.qty);
     modal.style.display = "flex";
   };
 });
 
-closePreview.onclick = () => modal.style.display = "none";
-modal.onclick = e => { if (e.target === modal) modal.style.display = "none"; };
+closePreview.onclick = ()=> modal.style.display="none";
+modal.onclick = e=>{ if(e.target===modal) modal.style.display="none"; };
 
 /* ---------- WHATSAPP SEND ---------- */
 const sendOrderWhatsAppBtn = document.getElementById("sendOrderWhatsAppBtn");
-
-sendOrderWhatsAppBtn.onclick = () => {
+sendOrderWhatsAppBtn.onclick = ()=>{
   const message = `
 Hello Abby Secret,
 I have placed an order:
 
 Items:
-${cart.map(i => "- " + i.name + " x" + i.qty).join("\n")}
+${cart.map(i => "- " + i.name + " x" + i.qty + " (Image: "+i.image+")").join("\n")}
 
-Total Paid: ₦${formatNumber(orderInfo.totalAmount || 0)}
+Total Paid: ₦${formatNumber(orderInfo.totalAmount||0)}
 
 Delivery Details:
-Name: ${orderInfo.name || ""}
-Address: ${orderInfo.address || ""}
-Phone: ${orderInfo.phone || ""}
-Bus Stop: ${orderInfo.bus || ""}
-Mode: ${orderInfo.mode || ""}
+Name: ${orderInfo.name||""}
+Address: ${orderInfo.address||""}
+Phone: ${orderInfo.phone||""}
+Bus Stop: ${orderInfo.bus||""}
+Mode: ${orderInfo.mode||""}
 `;
 
-  const url = "https://wa.me/2349122054068?text=" + encodeURIComponent(message);
-  window.open(url, "_blank");
+  const url = "https://wa.me/2349122054068?text="+encodeURIComponent(message);
+  window.open(url,"_blank");
+};
+
+/* ---------- BACK TO HOME ---------- */
+document.getElementById("backHomeBtn").onclick = ()=>{
+  window.location.href = "home.html";
 };
 </script>
 
