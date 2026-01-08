@@ -489,6 +489,38 @@ function toast(msg){
   setTimeout(()=>{ t.style.transition='opacity .3s'; t.style.opacity='0'; setTimeout(()=>t.remove(),300); }, 1100);
 }
 
+/* ---------- Page Loader ---------- */
+const loaderEl = document.getElementById("pageLoader");
+const loaderBar = document.getElementById("loaderBar");
+
+let loaderInterval = null;
+
+function showPageLoader() {
+  if (!loaderEl) return;
+
+  loaderEl.classList.add("active");
+
+  let progress = 0;
+  loaderBar.style.width = "0%";
+
+  loaderInterval = setInterval(() => {
+    progress = Math.min(progress + Math.random() * 18, 90);
+    loaderBar.style.width = progress + "%";
+  }, 300);
+}
+
+function hidePageLoader() {
+  if (!loaderEl) return;
+
+  loaderBar.style.width = "100%";
+  clearInterval(loaderInterval);
+
+  setTimeout(() => {
+    loaderEl.classList.remove("active");
+  }, 300);
+}
+
+
 /* ---------- Cart Helpers ---------- */
 function normalizePrice(priceStr){
   if(typeof priceStr === 'number') return priceStr;
@@ -522,12 +554,19 @@ categories.forEach(cat=>{
 });
 
 async function fetchProducts(){
-  try{
+  showPageLoader();
+
+  try {
     const res = await fetch(`${backendURL}/products`);
     const data = await res.json();
     products = data;
     renderProducts(products);
-  }catch(err){ console.error(err); alert("Failed to fetch products from backend"); }
+  } catch (err) {
+    console.error(err);
+    alert("Failed to fetch products");
+  } finally {
+    hidePageLoader();
+  }
 }
 
 function renderProducts(list){
