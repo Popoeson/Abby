@@ -433,6 +433,49 @@ body{
   border-radius: 999px;
   transition: width .4s ease;
 }
+
+/* ---------- Pagination Styles ---------- */
+#pagination {
+  display: flex;
+  justify-content: center; /* centers pagination horizontally */
+  align-items: center;
+  margin: 24px 0;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-family: 'Inter', sans-serif;
+}
+
+#pagination button {
+  background: #1a1a1a;        /* dark background matching site */
+  color: #fff;                 /* white text */
+  border: 1px solid #333;      /* subtle border */
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+#pagination button:hover:not(.active) {
+  background: #d4af37;          /* gold on hover */
+  color: #000;
+  border-color: #d4af37;
+}
+
+#pagination button.active {
+  background: #d4af37;          /* gold for current page */
+  color: #000;
+  border-color: #d4af37;
+  font-weight: 600;
+}
+
+#pagination button:disabled {
+  opacity: 0.5;
+  cursor: default;
+  background: #111;
+  border-color: #222;
+}
 </style>
 </head>
 <body>
