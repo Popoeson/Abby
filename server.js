@@ -40,12 +40,14 @@ mongoose.connect(process.env.MONGO_URI, {useNewUrlParser:true, useUnifiedTopolog
 .catch(err=>console.log("MongoDB error:", err));
 
 const productSchema = new mongoose.Schema({
-  name: {type:String, required:true},
-  category: {type:String, required:true},
-  price: {type:String, required:true},
-  desc: {type:String},
-  image: {type:String, required:true}
-}, {timestamps:true});
+  name: { type: String, required: true  },
+  category: { type: String, required: true },
+  price: { type: String, required: true },
+  desc: { type: String},
+  image: {type: String,required: true},
+  stock: { type: Number,default: 0},
+  isOutOfStock: { type: Boolean, default: false }
+}, { timestamps: true });
 
 const Product = mongoose.model("Product", productSchema);
 
@@ -64,36 +66,71 @@ app.get("/products", async (req,res)=>{
 });
 
 // POST add product
-app.post("/products", parser.single("image"), async (req,res)=>{
-  try{
-    const {name, category, price, desc} = req.body;
-    if(!req.file) return res.status(400).json({error:"Image required"});
+app.post("/products", parser.single("image"), async (req, res) => {
+  try {
+    const { name, category, price, desc, stock, isOutOfStock } = req.body;
+
+    if (!req.file) {
+      return res.status(400).json({ error: "Image required" });
+    }
+
+    const parsedStock = Number(stock) || 0;
+    const outStatus =
+      isOutOfStock === "true" || parsedStock === 0;
 
     const newProduct = new Product({
-      name, category, price, desc,
-      image: req.file.path
+      name,
+      category,
+      price,
+      desc,
+      image: req.file.path,
+      stock: parsedStock,
+      isOutOfStock: outStatus
     });
 
     await newProduct.save();
     res.json(newProduct);
-  }catch(err){
-    console.log(err);
-    res.status(500).json({error:"Server error"});
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
 // PUT edit product
-app.put("/products/:id", parser.single("image"), async (req,res)=>{
-  try{
-    const {name, category, price, desc} = req.body;
-    const updateData = {name, category, price, desc};
-    if(req.file) updateData.image = req.file.path;
+app.put("/products/:id", parser.single("image"), async (req, res) => {
+  try {
+    const { name, category, price, desc, stock, isOutOfStock } = req.body;
 
-    const updated = await Product.findByIdAndUpdate(req.params.id, updateData, {new:true});
+    const parsedStock = Number(stock);
+    const updateData = {
+      name,
+      category,
+      price,
+      desc
+    };
+
+    if (!isNaN(parsedStock)) {
+      updateData.stock = parsedStock;
+      updateData.isOutOfStock =
+        isOutOfStock === "true" || parsedStock === 0;
+    }
+
+    if (req.file) {
+      updateData.image = req.file.path;
+    }
+
+    const updated = await Product.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true }
+    );
+
     res.json(updated);
-  }catch(err){
-    console.log(err);
-    res.status(500).json({error:"Server error"});
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
