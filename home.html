@@ -841,7 +841,7 @@ function filterCategory(cat){
 /* ---------- Modal Logic ---------- */
 const modal = document.getElementById("modal");
 const modalAddBtn = document.getElementById("modalAddBtn");
-const modalOrderBtn = document.getElementById("modalOrderBtn");
+// const modalOrderBtn = document.getElementById("modalOrderBtn");
 let modalCurrentProduct = null;
 
 function openModal(data){
@@ -886,13 +886,13 @@ function openModal(data){
     showCart();
   };
 
-  modalOrderBtn.onclick = () => {
+/*  modalOrderBtn.onclick = () => {
     if(out) return;
     orderWhatsApp(data);
-  };
+  };*/
 
   modalAddBtn.classList.toggle("disabled", out);
-  modalOrderBtn.classList.toggle("disabled", out);
+//  modalOrderBtn.classList.toggle("disabled", out);
 
   modal.style.display = "flex";
   modal.setAttribute("aria-hidden","false");
