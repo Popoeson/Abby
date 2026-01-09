@@ -276,6 +276,47 @@ body{
   align-items:center;
 }
 
+/* ---------- stock badge ---------- */
+.stock-badge{
+  position:absolute;
+  top:10px;
+  left:10px;
+  padding:4px 10px;
+  border-radius:50px;
+  font-size:11px;
+  font-weight:600;
+  backdrop-filter: blur(10px);
+  border:1px solid var(--glass-border);
+  background: rgba(0,0,0,0.45);
+  color: var(--gold);
+}
+
+/* low stock emphasis */
+.stock-badge.low{
+  background: rgba(212,175,55,0.15);
+  border-color: var(--gold);
+}
+
+/* out of stock */
+.stock-badge.out{
+  background: rgba(255,0,0,0.15);
+  color: #ff8080;
+  border-color: rgba(255,255,255,0.25);
+}
+
+/* dim card if out of stock */
+.card.out-of-stock img{
+  opacity: 0.45;
+  filter: grayscale(40%);
+}
+
+/* disabled buttons */
+.btn.disabled{
+  opacity:0.45;
+  cursor:not-allowed;
+  pointer-events:none;
+}
+
 /* ---------- cart drawer ---------- */
 .cart-drawer{
   position: fixed;
@@ -740,19 +781,44 @@ function renderPaginationControls(){
   container.appendChild(next);
 }
 
-/* ---------- Render Products (UNCHANGED) ---------- */
+/* ---------- Render Products (WITH STOCK) ---------- */
 function renderProducts(list){
   const grid = document.getElementById("productGrid");
   grid.innerHTML = "";
+
   list.forEach(p=>{
+    const stock = Number(p.stock || 0);
+    const out = p.isOutOfStock || stock === 0;
+
+    let stockLabel = "";
+    let stockClass = "";
+
+    if(out){
+      stockLabel = "Out of stock";
+      stockClass = "out";
+    } else if(stock <= 3){
+      stockLabel = `Only ${stock} left`;
+      stockClass = "low";
+    } else {
+      stockLabel = `In stock · ${stock}`;
+    }
+
     grid.innerHTML += `
-      <div class="card">
+      <div class="card ${out ? "out-of-stock" : ""}">
+        <div class="stock-badge ${stockClass}">${stockLabel}</div>
+
         <img src="${p.image}" onclick='openModal(${JSON.stringify(p)})'>
+
         <div class="card-body">
           <div class="category-tag">${escapeHtml(p.category)}</div>
           <div class="title">${escapeHtml(p.name)}</div>
           <div class="price">₦${escapeHtml(p.price)}</div>
-          <button class="btn" onclick='addToCartFromCard(${JSON.stringify(p)})'>Add to Cart</button>
+
+          <button 
+            class="btn ${out ? "disabled" : ""}" 
+            onclick='addToCartFromCard(${JSON.stringify(p)})'>
+            ${out ? "Unavailable" : "Add to Cart"}
+          </button>
         </div>
       </div>
     `;
@@ -784,13 +850,49 @@ function openModal(data){
   void content.offsetWidth;
   content.style.animation = "zoomIn 0.28s ease";
 
+  const stock = Number(data.stock || 0);
+  const out = data.isOutOfStock || stock === 0;
+
   document.getElementById("modalImg").src = data.image || "";
   document.getElementById("modalTitle").innerText = data.name || "";
   document.getElementById("modalDesc").innerText = data.desc || "";
-  modalCurrentProduct = data;
 
-  modalAddBtn.onclick = ()=>{ addToCartGeneric(data,1); showCart(); };
-  modalOrderBtn.onclick = ()=> orderWhatsApp(data);
+  // Stock info
+  let stockText = out
+    ? "Out of stock"
+    : stock <= 3
+      ? `Only ${stock} left`
+      : `In stock · ${stock}`;
+
+  let stockColor = out ? "#ff8080" : "var(--gold)";
+
+  // inject stock info
+  let stockEl = document.getElementById("modalStock");
+  if(!stockEl){
+    stockEl = document.createElement("div");
+    stockEl.id = "modalStock";
+    stockEl.style.marginBottom = "8px";
+    stockEl.style.fontSize = "13px";
+    stockEl.style.fontWeight = "600";
+    document.getElementById("modalDesc").after(stockEl);
+  }
+
+  stockEl.innerText = stockText;
+  stockEl.style.color = stockColor;
+
+  modalAddBtn.onclick = () => {
+    if(out) return;
+    addToCartGeneric(data,1);
+    showCart();
+  };
+
+  modalOrderBtn.onclick = () => {
+    if(out) return;
+    orderWhatsApp(data);
+  };
+
+  modalAddBtn.classList.toggle("disabled", out);
+  modalOrderBtn.classList.toggle("disabled", out);
 
   modal.style.display = "flex";
   modal.setAttribute("aria-hidden","false");
