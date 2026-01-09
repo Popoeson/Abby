@@ -395,6 +395,47 @@ body{
   .modal-content{ width: 95%; padding:14px; }
   .cart-thumb{ width:56px; height:56px; }
 }
+
+/* ---------- page loader ---------- */
+.page-loader{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(12px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 5000;
+}
+
+.loader-card{
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  padding: 28px 34px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+
+.spinner{
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 3px solid rgba(255,255,255,0.2);
+  border-top-color: var(--gold);
+  animation: spin 0.9s linear infinite;
+  margin: 0 auto 14px auto;
+}
+
+@keyframes spin{
+  to{ transform: rotate(360deg); }
+}
+
+.loader-text{
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 500;
+}
 </style>
 </head>
 <body>
@@ -468,10 +509,39 @@ body{
   </div>
 </div>
 
-<!-- --------------------------- SCRIPT (your supplied script unchanged) --------------------------- -->
+<!-- PAGE LOADER -->
+<div id="pageLoader" class="page-loader">
+  <div class="loader-card">
+    <div class="spinner"></div>
+    <div class="loader-text">Items are loading up...</div>
+  </div>
+</div>
+
 <script>
 /* ---------- preserve your backend URL ---------- */
 const backendURL = "https://abby-vybw.onrender.com";
+
+// ===== PAGE LOADER ========
+const pageLoader = document.getElementById("pageLoader");
+
+function showPageLoader(){
+  if(pageLoader) pageLoader.style.display = "flex";
+}
+
+function hidePageLoader(){
+  if(pageLoader){
+    pageLoader.style.opacity = "1";
+    setTimeout(()=>{
+      pageLoader.style.transition = "opacity .3s ease";
+      pageLoader.style.opacity = "0";
+      setTimeout(()=>{
+        pageLoader.style.display = "none";
+        pageLoader.style.opacity = "1";
+        pageLoader.style.transition = "";
+      },300);
+    },200);
+  }
+}
 
 /* ---------- existing categories ---------- */
 const categories = ["All","Bubu","2 Piece","Jumpsuit","Jeans","Beach Wears","Gowns","Joggers","Top","Luxury Wear"];
