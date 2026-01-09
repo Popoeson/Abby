@@ -521,7 +521,7 @@ body{
 /* ---------- preserve your backend URL ---------- */
 const backendURL = "https://abby-vybw.onrender.com";
 
-// ===== PAGE LOADER ========
+/* ---------- PAGE LOADER ---------- */
 const pageLoader = document.getElementById("pageLoader");
 
 function showPageLoader(){
@@ -549,6 +549,8 @@ const categories = ["All","Bubu","2 Piece","Jumpsuit","Jeans","Beach Wears","Gow
 /* ---------- state ---------- */
 let products = []; // fetched from backend
 let cart = loadCart();
+let currentProductList = [];
+let currentPage = 1;
 
 /* ---------- helpers: localStorage cart persistence ---------- */
 function saveCart(){
@@ -585,7 +587,7 @@ async function fetchProducts(){
     products = await res.json();
     currentProductList = products;
     currentPage = 1;
-    renderPaginatedProducts();
+    renderProducts(products);
   }catch(err){
     alert("Failed to fetch products");
   }finally{
@@ -593,8 +595,7 @@ async function fetchProducts(){
   }
 }
 
-
-/* ---------- Render Products (WITH STOCK) ---------- */
+/* ---------- Render Products ---------- */
 function renderProducts(list){
   const grid = document.getElementById("productGrid");
   grid.innerHTML = "";
@@ -616,30 +617,36 @@ function renderProducts(list){
       stockLabel = `In stock · ${stock}`;
     }
 
-    grid.innerHTML += `
-      <div class="card ${out ? "out-of-stock" : ""}">
-        <div class="stock-badge ${stockClass}">${stockLabel}</div>
+    const card = document.createElement("div");
+    card.className = "card" + (out ? " out-of-stock" : "");
 
-        <img src="${p.image}" onclick='openModal(${JSON.stringify(p)})'>
-
-        <div class="card-body">
-          <div class="category-tag">${escapeHtml(p.category)}</div>
-          <div class="title">${escapeHtml(p.name)}</div>
-          <div class="price">₦${escapeHtml(p.price)}</div>
-
-          <button 
-            class="btn ${out ? "disabled" : ""}" 
-            onclick='addToCartFromCard(${JSON.stringify(p)})'>
-            ${out ? "Unavailable" : "Add to Cart"}
-          </button>
-        </div>
+    card.innerHTML = `
+      <div class="stock-badge ${stockClass}">${stockLabel}</div>
+      <img src="${p.image}">
+      <div class="card-body">
+        <div class="category-tag">${escapeHtml(p.category)}</div>
+        <div class="title">${escapeHtml(p.name)}</div>
+        <div class="price">₦${escapeHtml(p.price)}</div>
+        <button class="btn ${out ? "disabled" : ""}">
+          ${out ? "Unavailable" : "Add to Cart"}
+        </button>
       </div>
     `;
+
+    // Event listeners
+    const img = card.querySelector("img");
+    img.addEventListener("click", ()=> openModal(p));
+
+    const btn = card.querySelector("button");
+    if(!out){
+      btn.addEventListener("click", ()=> addToCartGeneric(p,1));
+    }
+
+    grid.appendChild(card);
   });
 }
 
-
-/* ---------- category filter (unchanged behavior) ---------- */
+/* ---------- category filter ---------- */
 function filterCategory(cat){
   document.querySelectorAll(".cat-btn").forEach(b=>b.classList.remove("active"));
   [...document.querySelectorAll(".cat-btn")].find(b=>b.innerText===cat).classList.add("active");
@@ -648,14 +655,13 @@ function filterCategory(cat){
   renderProducts(filtered);
 }
 
-/* ---------- modal logic (keeps your existing openModal/closeModal but adds modal Add to Cart) ---------- */
+/* ---------- modal logic ---------- */
 const modal = document.getElementById("modal");
 const modalAddBtn = document.getElementById("modalAddBtn");
 const modalOrderBtn = document.getElementById("modalOrderBtn");
 let modalCurrentProduct = null;
 
 function openModal(data){
-  // reset animation
   const content = document.querySelector(".modal-content");
   content.style.animation = "none";
   void content.offsetWidth;
@@ -666,8 +672,7 @@ function openModal(data){
   document.getElementById("modalDesc").innerText = data.desc || "";
   modalCurrentProduct = data;
 
-  // attach behavior
-  modalAddBtn.onclick = ()=>{ addToCart(data); showCart(); };
+  modalAddBtn.onclick = ()=>{ addToCartGeneric(data,1); showCart(); };
   modalOrderBtn.onclick = ()=> orderWhatsApp(data);
 
   modal.style.display = "flex";
@@ -687,25 +692,16 @@ modal.addEventListener("click", function(e){
 });
 
 /* ---------- cart functions ---------- */
-
-/* cart item structure:
-  { id: product._id, name, price (string), qty:number, image, category, rawPriceNumber:number }
-*/
-
 function normalizePrice(priceStr){
-  // try to parse string like "14,000" -> number 14000
   if(typeof priceStr === 'number') return priceStr;
   try{
     return Number(String(priceStr).replace(/[^0-9.-]+/g,"")) || 0;
   }catch(e){ return 0; }
 }
 
-function addToCart(product, qty = 1){
-  const id = product._id || product.id || product.id === 0 ? (product._id || product.id) : null;
-  if(!id){
-    console.warn("Product id missing", product);
-    return;
-  }
+function addToCartGeneric(product, qty=1){
+  const id = product._id ?? product.id;
+  if(id == null) return;
   const existing = cart.find(c=>c.id==id);
   if(existing){
     existing.qty += qty;
@@ -722,10 +718,6 @@ function addToCart(product, qty = 1){
   }
   saveCart();
   toast("Added to cart");
-}
-
-function addToCartFromCard(product){
-  addToCart(product,1);
 }
 
 function updateQty(id, delta){
@@ -759,11 +751,10 @@ const cartTotalMini = document.getElementById("cartTotalMini");
 const cartEmptyHint = document.getElementById("cartEmptyHint");
 const checkoutBtn = document.getElementById("checkoutBtn");
 
-cartBtn.addEventListener("click", ()=> showCart());
-cartClose.addEventListener("click", ()=> hideCart());
-checkoutBtn.addEventListener("click", ()=> checkoutCart());
+cartBtn.addEventListener("click", showCart);
+cartClose.addEventListener("click", hideCart);
+checkoutBtn.addEventListener("click", checkoutCart);
 
-// show/hide
 function showCart(){
   cartDrawer.classList.add("open");
   cartDrawer.setAttribute("aria-hidden","false");
@@ -774,7 +765,6 @@ function hideCart(){
   cartDrawer.setAttribute("aria-hidden","true");
 }
 
-/* render cart items */
 function renderCartItems(){
   const container = cartItemsContainer;
   container.innerHTML = "";
@@ -820,19 +810,17 @@ function renderCartItems(){
   cartCount.innerText = cart.reduce((s,i)=>s+i.qty,0);
 }
 
-/* update UI elements that reflect cart state */
 function updateCartUI(){
   renderCartItems();
 }
 
-/* ---------- checkout: build WhatsApp message including all items ---------- */
+/* ---------- checkout ---------- */
 function checkoutCart(){
   if(!cart || cart.length===0){
     alert("Cart is empty.");
     return;
   }
 
-  // Build message
   let lines = [];
   lines.push("Hello Abby Secret,");
   lines.push("I would like to place a bulk order:");
@@ -844,7 +832,6 @@ function checkoutCart(){
     const subtotal = priceNum * it.qty;
     total += subtotal;
     lines.push(`${idx+1}. ${it.name} — Qty: ${it.qty} — ₦${formatNumber(priceNum)} each — Sub: ₦${formatNumber(subtotal)}`);
-    // Include image url on separate line (they asked images be sent alongside)
     if(it.image) lines.push(`Image: ${it.image}`);
     lines.push("");
   });
@@ -854,48 +841,12 @@ function checkoutCart(){
   lines.push("Please confirm availability and delivery details.");
 
   const message = lines.join("\n");
-  const phone = "2347083276512"; // your WhatsApp number (kept from your last code)
+  const phone = "2347083276512";
   const url = `https://wa.me/${phone}?text=` + encodeURIComponent(message);
-
-  // open whatsapp
   window.open(url, "_blank");
-
-  // Optionally keep or clear cart. We'll keep it so admin can adjust.
-  // To clear: clearCart();
 }
 
-
-/* ---------- Add to cart convenience wrapper ---------- */
-function addToCart(product){
-  addToCartGeneric(product,1);
-}
-function addToCartGeneric(product, qty){
-  // same as addToCart earlier but not conflicting
-  const id = product._id || product.id || product.id === 0 ? (product._id || product.id) : null;
-  if(!id) return;
-  const existing = cart.find(c=>c.id==id);
-  if(existing){
-    existing.qty += qty;
-  } else {
-    cart.push({
-      id: id,
-      name: product.name,
-      price: String(product.price||"0"),
-      qty: qty,
-      image: product.image,
-      category: product.category,
-      rawPrice: normalizePrice(product.price)
-    });
-  }
-  saveCart();
-}
-
-/* allow calling from inline onclick handlers (stringified product passed) */
-function addToCartFromCard(product){
-  addToCartGeneric(product,1);
-}
-
-/* ---------- orderWhatsApp (keeps original single-item order behavior) ---------- */
+/* ---------- single item WhatsApp order ---------- */
 function orderWhatsApp(product){
   const message =
 `Hello Abby Secret,
@@ -905,7 +856,7 @@ Item: ${product.name}
 Category: ${product.category}
 Price: ₦${product.price}
 Image: ${product.image}
-Ref: ${product._id || product.id}`;
+Ref: ${product._id ?? product.id}`;
 
   const url = "https://wa.me/2347083276512?text=" + encodeURIComponent(message);
   window.open(url, "_blank");
@@ -917,10 +868,9 @@ function formatNumber(num){
 }
 function escapeHtml(s){
   if(!s) return "";
-  return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;'}[c]));
 }
 function toast(msg){
-  // minimal toast: browser alert would be intrusive; quick ephemeral element
   const t = document.createElement('div');
   t.innerText = msg;
   t.style.position='fixed';
@@ -935,40 +885,17 @@ function toast(msg){
   setTimeout(()=>{ t.style.transition='opacity .3s'; t.style.opacity='0'; setTimeout(()=>t.remove(),300); }, 1100);
 }
 
-/* ---------- initial rendering & bindings ---------- */
-document.addEventListener('click', function(e){
-  // close cart when clicking outside if opened (optional)
-  // (not closing on cartBtn or cartDrawer)
-});
-
-// wire modal Order button (in case used outside openModal)
-document.getElementById('modalOrderBtn').addEventListener('click', function(){
-  if(modalCurrentProduct) orderWhatsApp(modalCurrentProduct);
-});
-
-// wire modal Add (if needed; openModal reassigns handler)
-document.getElementById('modalAddBtn').addEventListener('click', function(){
-  if(modalCurrentProduct){
-    addToCartGeneric(modalCurrentProduct,1);
-    showCart();
-  }
-});
-
-// link cart close clickable area
-document.getElementById('cartClose').addEventListener('click', hideCart);
-
-/* allow remove/update to be called from dynamic html (make functions global) */
+/* ---------- global exposure for dynamic HTML ---------- */
 window.updateQty = updateQty;
 window.removeFromCart = removeFromCart;
-window.addToCartFromCard = addToCartFromCard;
+window.addToCartFromCard = addToCartGeneric;
 window.orderWhatsApp = orderWhatsApp;
 window.openModal = openModal;
 window.closeModal = closeModal;
 
-/* initial fetch & cart UI refresh */
+/* ---------- initial fetch & cart UI refresh ---------- */
 fetchProducts();
-saveCart(); // triggers UI update
-
+saveCart();
 </script>
 </body>
 </html>
