@@ -229,43 +229,61 @@ body{
 
 <script>
 const backendURL = "https://abby-vybw.onrender.com";
-let products=[], filtered=[], page=1;
-const perPage=8;
+let products = [], filtered = [], page = 1;
+const perPage = 8;
 
-const spinner=document.getElementById("spinner");
-const saveBtn=document.getElementById("saveBtn");
+/* ---------- DOM REFERENCES (FIX) ---------- */
+const addForm = document.getElementById("addForm");
+const productGrid = document.getElementById("productGrid");
+const pagination = document.getElementById("pagination");
+const searchInput = document.getElementById("searchInput");
+const spinner = document.getElementById("spinner");
+const saveBtn = document.getElementById("saveBtn");
 
+const nameInput = document.getElementById("name");
+const priceInput = document.getElementById("price");
+const descInput = document.getElementById("desc");
+const stockInput = document.getElementById("stock");
+const outOfStockInput = document.getElementById("outOfStock");
+const productIdInput = document.getElementById("productId");
+const imageFileInput = document.getElementById("imageFile");
+
+/* ---------- UI ---------- */
 function toggleForm(){
-  addForm.style.display = addForm.style.display==="block"?"none":"block";
+  addForm.style.display = addForm.style.display === "block" ? "none" : "block";
 }
 
 function setLoading(v){
-  spinner.style.display=v?"flex":"none";
-  saveBtn.disabled=v;
-  saveBtn.innerText=v?"Saving...":"Save Product";
+  spinner.style.display = v ? "flex" : "none";
+  saveBtn.disabled = v;
+  saveBtn.innerText = v ? "Saving..." : "Save Product";
 }
 
+/* ---------- FETCH ---------- */
 async function fetchProducts(){
-  const res=await fetch(`${backendURL}/products`);
-  products=await res.json();
-  filtered=[...products];
-  page=1;
+  const res = await fetch(`${backendURL}/products`);
+  products = await res.json();
+  filtered = [...products];
+  page = 1;
   render();
 }
 
+/* ---------- RENDER ---------- */
 function render(){
-  productGrid.innerHTML="";
-  const slice=filtered.slice((page-1)*perPage,page*perPage);
+  productGrid.innerHTML = "";
+
+  const slice = filtered.slice((page - 1) * perPage, page * perPage);
+
   slice.forEach(p=>{
-    productGrid.innerHTML+=`
+    productGrid.innerHTML += `
       <div class="card">
         <img src="${p.image}">
         <div class="card-body">
           <div class="title">${p.name}</div>
           <div class="price">₦${p.price}</div>
-          <div class="desc">${p.desc}</div>
-          <div class="stock-status ${p.isOutOfStock?'out-stock':'in-stock'}">
-            ${p.isOutOfStock?'Out of stock':'Stock: '+p.stock}
+          <div class="desc">${p.desc || ""}</div>
+          <div class="stock-status ${p.isOutOfStock ? 'out-stock' : 'in-stock'}">
+            ${p.isOutOfStock ? '❌ Out of Stock' : `✅ Stock: ${p.stock}`}
           </div>
           <div class="action-btns">
             <button class="edit-btn" onclick="editProduct('${p._id}')">Edit</button>
@@ -274,46 +292,82 @@ function render(){
         </div>
       </div>`;
   });
+
   renderPagination();
 }
 
+/* ---------- PAGINATION ---------- */
 function renderPagination(){
-  pagination.innerHTML="";
-  const pages=Math.ceil(filtered.length/perPage);
+  pagination.innerHTML = "";
+  const pages = Math.ceil(filtered.length / perPage);
+
   for(let i=1;i<=pages;i++){
-    pagination.innerHTML+=`<button class="page-btn ${i===page?'active':''}" onclick="page=${i};render()">${i}</button>`;
+    pagination.innerHTML += `
+      <button class="page-btn ${i===page?'active':''}"
+        onclick="page=${i};render()">${i}</button>`;
   }
 }
 
-searchInput.oninput=e=>{
-  filtered=products.filter(p=>p.name.toLowerCase().includes(e.target.value.toLowerCase()));
-  page=1; render();
+/* ---------- SEARCH ---------- */
+searchInput.oninput = e=>{
+  const q = e.target.value.toLowerCase();
+  filtered = products.filter(p =>
+    p.name.toLowerCase().includes(q)
+  );
+  page = 1;
+  render();
 };
 
+/* ---------- ADD / UPDATE ---------- */
 async function addOrUpdateProduct(){
-  if(!name.value.trim()) return alert("Name required");
+  if (!nameInput.value.trim()) {
+    alert("Product name is required");
+    return;
+  }
+
   setLoading(true);
-  const fd=new FormData();
-  ["name","price","desc","stock"].forEach(id=>fd.append(id,window[id].value));
-  fd.append("isOutOfStock",outOfStock.checked);
-  if(imageFile.files[0]) fd.append("image",imageFile.files[0]);
 
-  const url=productId.value?`${backendURL}/products/${productId.value}`:`${backendURL}/products`;
-  await fetch(url,{method:productId.value?"PUT":"POST",body:fd});
-  resetForm(); fetchProducts(); setLoading(false);
+  const fd = new FormData();
+  fd.append("name", nameInput.value.trim());
+  fd.append("price", priceInput.value.trim());
+  fd.append("desc", descInput.value.trim());
+  fd.append("stock", stockInput.value || 0);
+  fd.append("isOutOfStock", outOfStockInput.checked);
+
+  if (imageFileInput.files[0]) {
+    fd.append("image", imageFileInput.files[0]);
+  }
+
+  const url = productIdInput.value
+    ? `${backendURL}/products/${productIdInput.value}`
+    : `${backendURL}/products`;
+
+  await fetch(url, {
+    method: productIdInput.value ? "PUT" : "POST",
+    body: fd
+  });
+
+  resetForm();
+  fetchProducts();
+  setLoading(false);
 }
 
+/* ---------- EDIT ---------- */
 function editProduct(id){
-  const p=products.find(x=>x._id===id);
-  Object.assign(name,{value:p.name});
-  Object.assign(price,{value:p.price});
-  Object.assign(desc,{value:p.desc});
-  Object.assign(stock,{value:p.stock});
-  outOfStock.checked=p.isOutOfStock;
-  productId.value=p._id;
-  addForm.style.display="block";
+  const p = products.find(x => x._id === id);
+  if (!p) return;
+
+  productIdInput.value = p._id;
+  nameInput.value = p.name || "";
+  priceInput.value = p.price || "";
+  descInput.value = p.desc || "";
+  stockInput.value = p.stock ?? 0;
+  outOfStockInput.checked = p.isOutOfStock || false;
+
+  addForm.style.display = "block";
 }
 
+/* ---------- DELETE ---------- */
 async function deleteProduct(id){
   if(confirm("Delete product?")){
     await fetch(`${backendURL}/products/${id}`,{method:"DELETE"});
@@ -321,12 +375,18 @@ async function deleteProduct(id){
   }
 }
 
+/* ---------- RESET ---------- */
 function resetForm(){
-  productId.value="";
-  name.value=price.value=desc.value=stock.value="";
-  outOfStock.checked=false;
+  productIdInput.value = "";
+  nameInput.value = "";
+  priceInput.value = "";
+  descInput.value = "";
+  stockInput.value = "";
+  outOfStockInput.checked = false;
+  imageFileInput.value = "";
 }
 
+/* ---------- INIT ---------- */
 fetchProducts();
 </script>
 </body>
