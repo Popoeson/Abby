@@ -17,7 +17,7 @@
 
 body{
   margin:0;
-  font-family: 'Inter', sans-serif;
+  font-family: Inter, sans-serif;
   background: var(--bg-gradient);
   color:white;
 }
@@ -31,17 +31,29 @@ body{
 .logo{
   font-size:28px;
   font-weight:700;
-  color: var(--gold);
-  margin-bottom:16px;
+  color:var(--gold);
 }
 
+.search-wrap{
+  padding:14px 16px;
+}
+
+.search-wrap input{
+  width:100%;
+  padding:12px;
+  border-radius:50px;
+  border:1px solid var(--glass-border);
+  background:var(--glass-bg);
+  color:white;
+  outline:none;
+}
+
+/* ---------- form ---------- */
 .form-card{
   margin:16px;
-  border-radius: var(--radius);
-  overflow:hidden;
-  background: var(--glass-bg);
+  background:var(--glass-bg);
   border:1px solid var(--glass-border);
-  backdrop-filter: blur(10px);
+  border-radius:var(--radius);
 }
 
 .toggle-btn{
@@ -49,20 +61,14 @@ body{
   padding:12px;
   font-size:16px;
   font-weight:600;
-  background: var(--gold);
-  color:black;
+  background:var(--gold);
   border:none;
   cursor:pointer;
-  border-radius: var(--radius);
 }
 
 .form-container{
   padding:20px;
-}
-
-.form-container h2{
-  margin-top:0;
-  color: var(--gold);
+  display:none;
 }
 
 .form-container input,
@@ -71,100 +77,58 @@ body{
   width:100%;
   padding:10px;
   margin:8px 0;
-  border-radius: var(--radius);
+  border-radius:var(--radius);
   border:1px solid var(--glass-border);
-  background: rgba(255,255,255,0.05);
+  background:rgba(255,255,255,0.05);
   color:white;
-}
-
-.form-container textarea{
-  resize: vertical;
 }
 
 .stock-row{
   display:flex;
-  gap:12px;
+  gap:10px;
   align-items:center;
-}
-
-.stock-row input[type="number"]{
-  flex:1;
-}
-
-.stock-row label{
-  display:flex;
-  align-items:center;
-  gap:6px;
-  font-size:14px;
-  color:var(--muted);
 }
 
 .submit-btn{
   width:100%;
   padding:12px;
-  background: var(--gold);
-  color:black;
+  background:var(--gold);
   border:none;
-  border-radius: var(--radius);
+  border-radius:var(--radius);
   font-weight:600;
   cursor:pointer;
 }
 
+/* ---------- grid ---------- */
 .grid{
   padding:16px;
   display:grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns:repeat(2,1fr);
   gap:16px;
 }
 
-@media(min-width:768px){
-  .grid{ grid-template-columns: repeat(3, 1fr); }
-}
-@media(min-width:1024px){
-  .grid{ grid-template-columns: repeat(4, 1fr); }
-}
+@media(min-width:768px){ .grid{ grid-template-columns:repeat(3,1fr); } }
+@media(min-width:1024px){ .grid{ grid-template-columns:repeat(4,1fr); } }
 
 .card{
-  background: var(--glass-bg);
+  background:var(--glass-bg);
   border:1px solid var(--glass-border);
-  backdrop-filter: blur(10px);
-  border-radius: var(--radius);
+  border-radius:var(--radius);
   overflow:hidden;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.6);
 }
 
 .card img{
   width:100%;
   height:200px;
-  object-fit: cover;
+  object-fit:cover;
 }
 
-.card-body{
-  padding:12px;
-}
+.card-body{ padding:12px; }
+.title{ font-weight:600; }
+.price{ color:var(--gold); margin:6px 0; }
+.desc{ font-size:13px; color:var(--muted); }
 
-.title{
-  font-size:16px;
-  font-weight:600;
-}
-
-.price{
-  color: var(--gold);
-  font-weight:700;
-  margin:6px 0;
-}
-
-.desc{
-  font-size:13px;
-  color: var(--muted);
-}
-
-.stock-status{
-  margin-top:6px;
-  font-size:13px;
-  font-weight:600;
-}
-
+.stock-status{ font-size:13px; margin-top:6px; }
 .in-stock{ color:#4caf50; }
 .out-stock{ color:#ff4d4d; }
 
@@ -174,17 +138,60 @@ body{
   margin-top:10px;
 }
 
-.edit-btn, .delete-btn{
+.edit-btn{ background:#00aaff; }
+.delete-btn{ background:#ff4d4d; }
+.edit-btn,.delete-btn{
   flex:1;
-  padding:6px;
   border:none;
-  border-radius: var(--radius);
-  font-weight:600;
+  padding:6px;
+  color:white;
+  border-radius:var(--radius);
   cursor:pointer;
 }
 
-.edit-btn{ background:#00aaff; color:white; }
-.delete-btn{ background:#ff4d4d; color:white; }
+/* ---------- pagination ---------- */
+.pagination{
+  display:flex;
+  justify-content:center;
+  gap:8px;
+  margin:20px 0 40px;
+}
+
+.page-btn{
+  padding:6px 14px;
+  border-radius:50px;
+  border:1px solid var(--glass-border);
+  background:var(--glass-bg);
+  color:white;
+  cursor:pointer;
+}
+
+.page-btn.active{
+  background:var(--gold);
+  color:black;
+}
+
+/* ---------- spinner ---------- */
+.spinner-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.6);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:999;
+}
+
+.spinner{
+  width:50px;
+  height:50px;
+  border:4px solid rgba(255,255,255,0.2);
+  border-top:4px solid var(--gold);
+  border-radius:50%;
+  animation:spin 1s linear infinite;
+}
+
+@keyframes spin{ to{ transform:rotate(360deg); } }
 </style>
 </head>
 
@@ -194,143 +201,119 @@ body{
   <div class="logo">Abby's Secret – Admin</div>
 </div>
 
+<div class="search-wrap">
+  <input id="searchInput" placeholder="Search products...">
+</div>
+
 <div class="form-card">
   <button class="toggle-btn" onclick="toggleForm()">+ Add Product</button>
 
-  <div class="form-container" id="addForm" style="display:none;">
-    <h2>Add / Edit Product</h2>
-
+  <div class="form-container" id="addForm">
     <input type="hidden" id="productId">
-
-    <input type="text" id="name" placeholder="Product Name">
-
-    <select id="category">
-      <option value="">Select Category</option>
-      <option>Bubu</option>
-      <option>2 Piece</option>
-      <option>Jumpsuit</option>
-      <option>Jeans</option>
-      <option>Beach Wears</option>
-      <option>Gowns</option>
-      <option>Joggers</option>
-      <option>Top</option>
-      <option>Luxury Wear</option>
-    </select>
-
-    <input type="text" id="price" placeholder="Price">
+    <input id="name" placeholder="Product Name">
+    <input id="price" placeholder="Price">
     <textarea id="desc" placeholder="Description"></textarea>
-
-    <!-- STOCK CONTROLS -->
-    <div class="stock-row">
-      <input type="number" id="stock" placeholder="Stock Quantity" min="0">
-      <label>
-        <input type="checkbox" id="outOfStock">
-        Out of Stock
-      </label>
-    </div>
-
-    <div style="margin:10px 0;">
-      <img id="imagePreview" style="width:100%;max-height:200px;object-fit:cover;border-radius:14px;display:none;">
-    </div>
-
-    <input type="file" id="imageFile" accept="image/*" onchange="updateImagePreviewFile()">
-
-    <button class="submit-btn" onclick="addOrUpdateProduct()">Save Product</button>
+    <input type="number" id="stock" placeholder="Stock">
+    <label><input type="checkbox" id="outOfStock"> Out of Stock</label>
+    <input type="file" id="imageFile">
+    <button class="submit-btn" id="saveBtn" onclick="addOrUpdateProduct()">Save Product</button>
   </div>
 </div>
 
 <div class="grid" id="productGrid"></div>
+<div class="pagination" id="pagination"></div>
+
+<div class="spinner-overlay" id="spinner">
+  <div class="spinner"></div>
+</div>
 
 <script>
 const backendURL = "https://abby-vybw.onrender.com";
+let products=[], filtered=[], page=1;
+const perPage=8;
 
-// Toggle form
+const spinner=document.getElementById("spinner");
+const saveBtn=document.getElementById("saveBtn");
+
 function toggleForm(){
-  const f = document.getElementById("addForm");
-  f.style.display = f.style.display === "none" ? "block" : "none";
+  addForm.style.display = addForm.style.display==="block"?"none":"block";
 }
 
-// Image preview
-function updateImagePreviewFile(){
-  const file = imageFile.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = e=>{
-    imagePreview.src = e.target.result;
-    imagePreview.style.display="block";
-  };
-  reader.readAsDataURL(file);
+function setLoading(v){
+  spinner.style.display=v?"flex":"none";
+  saveBtn.disabled=v;
+  saveBtn.innerText=v?"Saving...":"Save Product";
 }
 
-// Fetch products
 async function fetchProducts(){
-  const res = await fetch(`${backendURL}/products`);
-  window.products = await res.json();
-  renderProducts();
+  const res=await fetch(`${backendURL}/products`);
+  products=await res.json();
+  filtered=[...products];
+  page=1;
+  render();
 }
 
-// Render products
-function renderProducts(){
-  productGrid.innerHTML = "";
-  products.forEach(p=>{
-    const stockText = (p.isOutOfStock || p.stock === 0)
-      ? `<div class="stock-status out-stock">❌ Out of Stock</div>`
-      : `<div class="stock-status in-stock">✅ Stock: ${p.stock}</div>`;
-
-    productGrid.innerHTML += `
+function render(){
+  productGrid.innerHTML="";
+  const slice=filtered.slice((page-1)*perPage,page*perPage);
+  slice.forEach(p=>{
+    productGrid.innerHTML+=`
       <div class="card">
         <img src="${p.image}">
         <div class="card-body">
           <div class="title">${p.name}</div>
           <div class="price">₦${p.price}</div>
           <div class="desc">${p.desc}</div>
-          ${stockText}
+          <div class="stock-status ${p.isOutOfStock?'out-stock':'in-stock'}">
+            ${p.isOutOfStock?'Out of stock':'Stock: '+p.stock}
+          </div>
           <div class="action-btns">
             <button class="edit-btn" onclick="editProduct('${p._id}')">Edit</button>
             <button class="delete-btn" onclick="deleteProduct('${p._id}')">Delete</button>
           </div>
         </div>
-      </div>
-    `;
+      </div>`;
   });
+  renderPagination();
 }
 
-// Add or update
+function renderPagination(){
+  pagination.innerHTML="";
+  const pages=Math.ceil(filtered.length/perPage);
+  for(let i=1;i<=pages;i++){
+    pagination.innerHTML+=`<button class="page-btn ${i===page?'active':''}" onclick="page=${i};render()">${i}</button>`;
+  }
+}
+
+searchInput.oninput=e=>{
+  filtered=products.filter(p=>p.name.toLowerCase().includes(e.target.value.toLowerCase()));
+  page=1; render();
+};
+
 async function addOrUpdateProduct(){
-  const fd = new FormData();
-  fd.append("name", name.value);
-  fd.append("category", category.value);
-  fd.append("price", price.value);
-  fd.append("desc", desc.value);
-  fd.append("stock", stock.value || 0);
-  fd.append("isOutOfStock", outOfStock.checked);
-  if(imageFile.files[0]) fd.append("image", imageFile.files[0]);
+  if(!name.value.trim()) return alert("Name required");
+  setLoading(true);
+  const fd=new FormData();
+  ["name","price","desc","stock"].forEach(id=>fd.append(id,window[id].value));
+  fd.append("isOutOfStock",outOfStock.checked);
+  if(imageFile.files[0]) fd.append("image",imageFile.files[0]);
 
-  const url = productId.value
-    ? `${backendURL}/products/${productId.value}`
-    : `${backendURL}/products`;
-
-  await fetch(url,{ method: productId.value ? "PUT" : "POST", body: fd });
-  resetForm();
-  fetchProducts();
+  const url=productId.value?`${backendURL}/products/${productId.value}`:`${backendURL}/products`;
+  await fetch(url,{method:productId.value?"PUT":"POST",body:fd});
+  resetForm(); fetchProducts(); setLoading(false);
 }
 
-// Edit
 function editProduct(id){
-  const p = products.find(x=>x._id===id);
-  productId.value = p._id;
-  name.value = p.name;
-  category.value = p.category;
-  price.value = p.price;
-  desc.value = p.desc;
-  stock.value = p.stock ?? 0;
-  outOfStock.checked = p.isOutOfStock || false;
-  imagePreview.src = p.image;
-  imagePreview.style.display="block";
+  const p=products.find(x=>x._id===id);
+  Object.assign(name,{value:p.name});
+  Object.assign(price,{value:p.price});
+  Object.assign(desc,{value:p.desc});
+  Object.assign(stock,{value:p.stock});
+  outOfStock.checked=p.isOutOfStock;
+  productId.value=p._id;
   addForm.style.display="block";
 }
 
-// Delete
 async function deleteProduct(id){
   if(confirm("Delete product?")){
     await fetch(`${backendURL}/products/${id}`,{method:"DELETE"});
@@ -338,15 +321,13 @@ async function deleteProduct(id){
   }
 }
 
-// Reset
 function resetForm(){
-  addForm.reset?.();
   productId.value="";
-  imagePreview.style.display="none";
+  name.value=price.value=desc.value=stock.value="";
+  outOfStock.checked=false;
 }
 
 fetchProducts();
 </script>
-
 </body>
 </html>
