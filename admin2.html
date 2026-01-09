@@ -211,12 +211,34 @@ body{
 
   <div class="form-container" id="addForm">
     <input type="hidden" id="productId">
+    
     <input id="name" placeholder="Product Name">
+    
+    <!-- CATEGORY SELECT -->
+    <select id="category">
+      <option value="">Select Category</option>
+      <option>Bubu</option>
+      <option>2 Piece</option>
+      <option>Jumpsuit</option>
+      <option>Jeans</option>
+      <option>Beach Wears</option>
+      <option>Gowns</option>
+      <option>Joggers</option>
+      <option>Top</option>
+      <option>Luxury Wear</option>
+    </select>
+    
     <input id="price" placeholder="Price">
     <textarea id="desc" placeholder="Description"></textarea>
-    <input type="number" id="stock" placeholder="Stock">
-    <label><input type="checkbox" id="outOfStock"> Out of Stock</label>
-    <input type="file" id="imageFile">
+    
+    <div class="stock-row">
+      <input type="number" id="stock" placeholder="Stock">
+      <label><input type="checkbox" id="outOfStock"> Out of Stock</label>
+    </div>
+    
+    <input type="file" id="imageFile" accept="image/*" onchange="updateImagePreview()">
+    <img id="imagePreview" style="display:none;height:100px;width:auto;border-radius:8px;margin-top:6px;object-fit:cover;">
+    
     <button class="submit-btn" id="saveBtn" onclick="addOrUpdateProduct()">Save Product</button>
   </div>
 </div>
@@ -233,7 +255,7 @@ const backendURL = "https://abby-vybw.onrender.com";
 let products = [], filtered = [], page = 1;
 const perPage = 8;
 
-/* ---------- DOM REFERENCES (FIX) ---------- */
+/* ---------- DOM References ---------- */
 const addForm = document.getElementById("addForm");
 const productGrid = document.getElementById("productGrid");
 const pagination = document.getElementById("pagination");
@@ -242,12 +264,14 @@ const spinner = document.getElementById("spinner");
 const saveBtn = document.getElementById("saveBtn");
 
 const nameInput = document.getElementById("name");
+const categoryInput = document.getElementById("category");
 const priceInput = document.getElementById("price");
 const descInput = document.getElementById("desc");
 const stockInput = document.getElementById("stock");
 const outOfStockInput = document.getElementById("outOfStock");
 const productIdInput = document.getElementById("productId");
 const imageFileInput = document.getElementById("imageFile");
+const imagePreview = document.getElementById("imagePreview");
 
 /* ---------- UI ---------- */
 function toggleForm(){
@@ -319,6 +343,21 @@ searchInput.oninput = e=>{
   render();
 };
 
+/* ---------- IMAGE PREVIEW ---------- */
+function updateImagePreview(){
+  const file = imageFileInput.files[0];
+  if(!file) {
+    imagePreview.style.display = "none";
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    imagePreview.src = e.target.result;
+    imagePreview.style.display = "block";
+  };
+  reader.readAsDataURL(file);
+}
+
 /* ---------- ADD / UPDATE ---------- */
 async function addOrUpdateProduct(){
   if (!nameInput.value.trim()) {
@@ -330,6 +369,7 @@ async function addOrUpdateProduct(){
 
   const fd = new FormData();
   fd.append("name", nameInput.value.trim());
+  fd.append("category", categoryInput.value);
   fd.append("price", priceInput.value.trim());
   fd.append("desc", descInput.value.trim());
   fd.append("stock", stockInput.value || 0);
@@ -360,10 +400,18 @@ function editProduct(id){
 
   productIdInput.value = p._id;
   nameInput.value = p.name || "";
+  categoryInput.value = p.category || "";
   priceInput.value = p.price || "";
   descInput.value = p.desc || "";
   stockInput.value = p.stock ?? 0;
   outOfStockInput.checked = p.isOutOfStock || false;
+
+  if(p.image){
+    imagePreview.src = p.image;
+    imagePreview.style.display = "block";
+  } else {
+    imagePreview.style.display = "none";
+  }
 
   addForm.style.display = "block";
 }
@@ -380,11 +428,13 @@ async function deleteProduct(id){
 function resetForm(){
   productIdInput.value = "";
   nameInput.value = "";
+  categoryInput.value = "";
   priceInput.value = "";
   descInput.value = "";
   stockInput.value = "";
   outOfStockInput.checked = false;
   imageFileInput.value = "";
+  imagePreview.style.display = "none";
 }
 
 /* ---------- INIT ---------- */
