@@ -531,6 +531,11 @@ const categories = ["All","Bubu","2 Piece","Jumpsuit","Jeans","Beach Wears","Gow
 let products = [];
 let cart = loadCart();
 
+/* ---------- Pagination State ---------- */
+let currentPage = 1;
+const ITEMS_PER_PAGE = 30;
+let currentProductList = [];
+
 /* ---------- Utilities ---------- */
 function formatNumber(num){ 
   try{ return Number(num).toLocaleString(); }
@@ -558,56 +563,41 @@ function toast(msg){
 /* ---------- Page Loader ---------- */
 const loaderEl = document.getElementById("pageLoader");
 const loaderBar = document.getElementById("loaderBar");
-
 let loaderInterval = null;
 
-function showPageLoader() {
-  if (!loaderEl) return;
-
+function showPageLoader(){
+  if(!loaderEl) return;
   loaderEl.classList.add("active");
-
   let progress = 0;
   loaderBar.style.width = "0%";
-
-  loaderInterval = setInterval(() => {
-    progress = Math.min(progress + Math.random() * 18, 90);
+  loaderInterval = setInterval(()=>{
+    progress = Math.min(progress + Math.random()*18, 90);
     loaderBar.style.width = progress + "%";
-  }, 300);
+  },300);
 }
-
-function hidePageLoader() {
-  if (!loaderEl) return;
-
+function hidePageLoader(){
+  if(!loaderEl) return;
   loaderBar.style.width = "100%";
   clearInterval(loaderInterval);
-
-  setTimeout(() => {
-    loaderEl.classList.remove("active");
-  }, 300);
+  setTimeout(()=>loaderEl.classList.remove("active"),300);
 }
-
 
 /* ---------- Cart Helpers ---------- */
 function normalizePrice(priceStr){
   if(typeof priceStr === 'number') return priceStr;
-  try{ return Number(String(priceStr).replace(/[^0-9.-]+/g,"")) || 0; }
-  catch(e){ return 0; }
+  return Number(String(priceStr).replace(/[^0-9.-]+/g,"")) || 0;
 }
 function updateCartUI(){ renderCartItems(); }
 function saveCart(){ 
-  try{ localStorage.setItem('abbyCart', JSON.stringify(cart)); }
-  catch(e){}
+  localStorage.setItem('abbyCart', JSON.stringify(cart));
   updateCartUI();
 }
 function loadCart(){ 
-  try{ 
-    const raw = localStorage.getItem('abbyCart'); 
-    if(!raw) return []; 
-    return JSON.parse(raw); 
-  }catch(e){ return []; } 
+  try{ return JSON.parse(localStorage.getItem('abbyCart')) || []; }
+  catch(e){ return []; } 
 }
 
-/* ---------- Products & Categories ---------- */
+/* ---------- Categories ---------- */
 const categoryBar = document.getElementById("categoryBar");
 categoryBar.innerHTML = "";
 categories.forEach(cat=>{
@@ -615,51 +605,93 @@ categories.forEach(cat=>{
   btn.className = "cat-btn";
   btn.innerText = cat;
   if(cat==="All") btn.classList.add("active");
-  btn.addEventListener("click", ()=> filterCategory(cat));
+  btn.onclick = ()=>filterCategory(cat);
   categoryBar.appendChild(btn);
 });
 
+/* ---------- Fetch Products ---------- */
 async function fetchProducts(){
   showPageLoader();
-
-  try {
+  try{
     const res = await fetch(`${backendURL}/products`);
-    const data = await res.json();
-    products = data;
-    renderProducts(products);
-  } catch (err) {
-    console.error(err);
+    products = await res.json();
+    currentProductList = products;
+    currentPage = 1;
+    renderPaginatedProducts();
+  }catch(err){
     alert("Failed to fetch products");
-  } finally {
+  }finally{
     hidePageLoader();
   }
 }
 
+/* ---------- PAGINATION CORE ---------- */
+function renderPaginatedProducts(){
+  const start = (currentPage - 1) * ITEMS_PER_PAGE;
+  const end = start + ITEMS_PER_PAGE;
+  renderProducts(currentProductList.slice(start, end));
+  renderPaginationControls();
+}
+
+function renderPaginationControls(){
+  const container = document.getElementById("pagination");
+  if(!container) return;
+
+  container.innerHTML = "";
+  const totalPages = Math.ceil(currentProductList.length / ITEMS_PER_PAGE);
+  if(totalPages <= 1) return;
+
+  const prev = document.createElement("button");
+  prev.innerText = "Prev";
+  prev.disabled = currentPage === 1;
+  prev.onclick = ()=>{ currentPage--; renderPaginatedProducts(); };
+  container.appendChild(prev);
+
+  for(let i=1;i<=totalPages;i++){
+    const btn = document.createElement("button");
+    btn.innerText = i;
+    btn.className = i === currentPage ? "active" : "";
+    btn.onclick = ()=>{ currentPage = i; renderPaginatedProducts(); };
+    container.appendChild(btn);
+  }
+
+  const next = document.createElement("button");
+  next.innerText = "Next";
+  next.disabled = currentPage === totalPages;
+  next.onclick = ()=>{ currentPage++; renderPaginatedProducts(); };
+  container.appendChild(next);
+}
+
+/* ---------- Render Products (UNCHANGED) ---------- */
 function renderProducts(list){
   const grid = document.getElementById("productGrid");
   grid.innerHTML = "";
   list.forEach(p=>{
     grid.innerHTML += `
       <div class="card">
-        <img src="${p.image}" onclick='openModal(${JSON.stringify(p)})' alt="${escapeHtml(p.name)}">
+        <img src="${p.image}" onclick='openModal(${JSON.stringify(p)})'>
         <div class="card-body">
           <div class="category-tag">${escapeHtml(p.category)}</div>
           <div class="title">${escapeHtml(p.name)}</div>
           <div class="price">₦${escapeHtml(p.price)}</div>
-          <div class="controls">
-            <button class="btn" onclick='addToCartFromCard(${JSON.stringify(p)})'>Add to Cart</button>
-          </div>
+          <button class="btn" onclick='addToCartFromCard(${JSON.stringify(p)})'>Add to Cart</button>
         </div>
-      </div>`;
+      </div>
+    `;
   });
 }
 
+/* ---------- Filter Category ---------- */
 function filterCategory(cat){
   document.querySelectorAll(".cat-btn").forEach(b=>b.classList.remove("active"));
   [...document.querySelectorAll(".cat-btn")].find(b=>b.innerText===cat).classList.add("active");
-  if(cat==="All") return renderProducts(products);
-  const filtered = products.filter(p=>p.category===cat);
-  renderProducts(filtered);
+
+  currentPage = 1;
+  currentProductList = cat === "All"
+    ? products
+    : products.filter(p=>p.category === cat);
+
+  renderPaginatedProducts();
 }
 
 /* ---------- Modal Logic ---------- */
@@ -896,7 +928,7 @@ proceedPaymentBtn.addEventListener("click", async function() {
 
             if (verifyData.status === "success") {
               toast("Payment successful! Redirecting to summary...");
-              
+
               // Save cart & order info to localStorage
               localStorage.setItem("orderInfo", JSON.stringify({name,address,phone,bus,mode,totalAmount}));
               localStorage.setItem("cart", JSON.stringify(cart));
@@ -935,9 +967,9 @@ window.orderWhatsApp = orderWhatsApp;
 window.openModal = openModal;
 window.closeModal = closeModal;
 
-/* ---------- Initial Fetch & Render ---------- */
+/* ---------- Initial Fetch & Render ---------- 
 fetchProducts();
-saveCart();
+saveCart();*/
 
 /* ---------- Resume Pending Order Banner ---------- */
 (function () {
@@ -994,6 +1026,10 @@ saveCart();
     window.location.href = "summary.html";
   };
 })();
+
+/* ---------- Initial ---------- */
+fetchProducts();
+saveCart();
 </script>
 </body>
 </html>
