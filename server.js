@@ -51,6 +51,22 @@ const productSchema = new mongoose.Schema({
 
 const Product = mongoose.model("Product", productSchema);
 
+// ===== FEEDBACK SCHEMA ======
+const feedbackSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  message: {
+    type: String,
+    required: true,
+    trim: true
+  }
+}, { timestamps: true });
+
+const Feedback = mongoose.model("Feedback", feedbackSchema);
+
 // ----------------------------
 // ROUTES
 // ----------------------------
@@ -142,6 +158,44 @@ app.delete("/products/:id", async (req,res)=>{
   }catch(err){
     console.log(err);
     res.status(500).json({error:"Server error"});
+  }
+});
+
+// ===== SAVE FEEDBACK ======
+app.post("/api/feedbacks", async (req, res) => {
+  try {
+    const { name, message } = req.body;
+
+    if (!name || !message) {
+      return res.status(400).json({ error: "All fields required" });
+    }
+
+    const feedback = new Feedback({ name, message });
+    await feedback.save();
+
+    res.json({ success: true });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// ====== FETCH FEEDBACK ========
+app.get("/api/feedbacks", async (req, res) => {
+  try {
+    const limit = Number(req.query.limit) || 20;
+
+    const feedbacks = await Feedback
+      .find()
+      .sort({ createdAt: -1 }) // newest first
+      .limit(limit);
+
+    res.json(feedbacks);
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
