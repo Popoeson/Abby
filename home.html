@@ -1360,7 +1360,7 @@ saveCart();
 
 /* ================= FEEDBACK SYSTEM (API READY) ================= */
 
-const FEEDBACK_API = "/api/feedbacks"; // change later if needed
+const FEEDBACK_API = `${backendURL}/api/feedbacks`;
 
 const track = document.getElementById("feedbackTrack");
 let feedbacks = [];
@@ -1371,9 +1371,11 @@ let autoSlideTimer = null;
 async function loadFeedbacks(){
   try{
     const res = await fetch(FEEDBACK_API);
-    feedbacks = await res.json();
+    if(!res.ok) throw new Error("Failed to fetch");
 
+    feedbacks = await res.json();
     if(!Array.isArray(feedbacks)) feedbacks = [];
+
     renderFeedbacks();
 
   }catch(err){
@@ -1425,7 +1427,7 @@ function startAutoSlide(){
     const pages = Math.ceil(feedbacks.length / 4);
     fbIndex = (fbIndex + 1) % pages;
     track.style.transform = `translateX(-${fbIndex * 100}%)`;
-  },3000);
+  }, 3000);
 }
 
 /* ---------- Submit Feedback ---------- */
@@ -1439,9 +1441,9 @@ async function submitFeedback(){
   }
 
   try{
-    const res = await fetch(FEEDBACK_API,{
-      method:"POST",
-      headers:{ "Content-Type":"application/json" },
+    const res = await fetch(FEEDBACK_API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, message })
     });
 
@@ -1452,17 +1454,16 @@ async function submitFeedback(){
 
     toast("Thank you for your feedback!");
 
-    // reload feedbacks after submit
     loadFeedbacks();
 
   }catch(err){
-    console.error(err);
+    console.error("Unable to send feedback", err);
     toast("Unable to send feedback");
   }
 }
 
 /* ---------- Utilities ---------- */
-function escapeHTML(str){
+function escapeHTML(str = ""){
   return str.replace(/[&<>"']/g, m => ({
     "&":"&amp;",
     "<":"&lt;",
@@ -1474,6 +1475,7 @@ function escapeHTML(str){
 
 /* ---------- Init ---------- */
 loadFeedbacks();
+
 </script>
 </body>
 </html>
