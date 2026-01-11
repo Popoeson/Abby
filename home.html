@@ -119,6 +119,43 @@ body{
   font-weight:700;
 }
 
+/* ---------- category wrapper ---------- */
+.category-wrapper{
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  margin-bottom:12px;
+}
+
+/* toggle button */
+.category-toggle{
+  margin:8px 0;
+  padding:6px 14px;
+  border-radius:50px;
+  background:rgba(255,255,255,0.08);
+  border:1px solid var(--glass-border);
+  color:white;
+  font-size:12px;
+  font-weight:500;
+  cursor:pointer;
+  transition:0.25s;
+}
+.category-toggle:hover{
+  background: rgba(255,255,255,0.16);
+}
+
+/* collapsible behavior */
+.category-grid{
+  overflow:hidden;
+  max-height:0;
+  transition: max-height 0.35s ease;
+}
+
+/* expanded state */
+.category-grid.show{
+  max-height:600px; /* adjust if you have more categories */
+}
 /* ---------- categories ---------- */
 .category-grid{
   margin-top:12px;
@@ -675,7 +712,13 @@ body{
   </div>
 </div>
 
-    <div class="category-grid" id="categoryBar"></div>
+<div class="category-wrapper">
+  <button class="category-toggle" onclick="toggleCategories()">
+    Show Categories
+  </button>
+
+  <div class="category-grid" id="categoryBar"></div>
+</div>
   </div>
 </div>
 
@@ -854,6 +897,23 @@ categories.forEach(cat=>{
   btn.onclick = ()=>filterCategory(cat);
   categoryBar.appendChild(btn);
 });
+
+/* -------- Wrap Categories --------*/
+let catOpen = false;
+
+function toggleCategories(){
+  catOpen = !catOpen;
+  categoryBar.classList.toggle("show", catOpen);
+  document.querySelector(".category-toggle").innerText =
+    catOpen ? "Hide Categories" : "Show Categories";
+}
+
+// Optional: auto-expand on desktop
+if(window.innerWidth > 768){
+  catOpen = true;
+  categoryBar.classList.add("show");
+  document.querySelector(".category-toggle").innerText = "Hide Categories";
+}
 
 /* ---------- Fetch Products ---------- */
 async function fetchProducts(){
