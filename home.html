@@ -120,12 +120,14 @@ body{
 }
 
 /* ---------- category wrapper ---------- */
-.category-wrapper{
-  width:100%;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  margin-bottom:5px;
+/* ---------- category wrapper ---------- */
+.category-wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* remove bottom margin when collapsed */
+  transition: margin-bottom 0.35s ease;
 }
 
 /* toggle button */
@@ -150,6 +152,11 @@ body{
   overflow:hidden;
   max-height:0;
   transition: max-height 0.35s ease;
+}
+
+/* collapsed state */
+.category-wrapper.collapsed {
+  margin-bottom: 0;
 }
 
 /* expanded state */
@@ -899,20 +906,23 @@ categories.forEach(cat=>{
 });
 
 /* -------- Wrap Categories --------*/
-let catOpen = false;
+let catOpen = true; // initially open
 
 function toggleCategories(){
   catOpen = !catOpen;
-  categoryBar.classList.toggle("show", catOpen);
-  document.querySelector(".category-toggle").innerText =
-    catOpen ? "Hide Categories" : "Show Categories";
-}
 
-// Optional: auto-expand on desktop
-if(window.innerWidth > 768){
-  catOpen = true;
-  categoryBar.classList.add("show");
-  document.querySelector(".category-toggle").innerText = "Hide Categories";
+  const wrapper = document.querySelector(".category-wrapper");
+  const grid = wrapper.querySelector(".category-grid");
+  const toggleBtn = wrapper.querySelector(".category-toggle");
+
+  grid.classList.toggle("show", catOpen);
+  wrapper.classList.toggle("collapsed", !catOpen);
+
+  toggleBtn.innerText = catOpen ? "Hide Categories" : "Show Categories";
+
+  // optional: push product grid up when collapsed
+  const productGrid = document.querySelector(".grid");
+  productGrid.style.marginTop = catOpen ? "16px" : "0px";
 }
 
 /* ---------- Fetch Products ---------- */
