@@ -541,6 +541,110 @@ body{
   background: #111;
   border-color: #222;
 }
+
+/* ---------- Feedback Section ---------- */
+.feedback-section{
+  max-width:1200px;
+  margin:40px auto;
+  padding:0 16px;
+}
+
+.feedback-title{
+  text-align:center;
+  font-size:18px;
+  font-weight:600;
+  color:var(--gold);
+  margin-bottom:18px;
+}
+
+/* slider */
+.feedback-wrapper{
+  position:relative;
+  display:flex;
+  align-items:center;
+}
+
+.feedback-viewport{
+  overflow:hidden;
+  width:100%;
+}
+
+.feedback-track{
+  display:flex;
+  transition:transform .45s ease;
+  gap:14px;
+}
+
+.feedback-card{
+  min-width:25%;
+  background:var(--glass-bg);
+  border:1px solid var(--glass-border);
+  backdrop-filter:blur(12px);
+  border-radius:14px;
+  padding:14px;
+  box-shadow:0 6px 18px rgba(0,0,0,.5);
+}
+
+.feedback-name{
+  font-weight:600;
+  color:var(--gold);
+  margin-bottom:6px;
+}
+
+.feedback-text{
+  font-size:12px;
+  color:var(--muted);
+}
+
+/* arrows */
+.fb-nav{
+  background:rgba(255,255,255,0.06);
+  border:1px solid var(--glass-border);
+  color:white;
+  font-size:22px;
+  padding:6px 10px;
+  border-radius:50%;
+  cursor:pointer;
+}
+.fb-nav:hover{
+  background:var(--gold);
+  color:black;
+}
+
+/* hide arrows on small screens */
+@media(max-width:600px){
+  .feedback-card{ min-width:50%; }
+}
+
+/* feedback form */
+.feedback-form{
+  margin-top:22px;
+  max-width:420px;
+  margin-left:auto;
+  margin-right:auto;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.feedback-form input,
+.feedback-form textarea{
+  padding:10px;
+  border-radius:10px;
+  border:1px solid var(--glass-border);
+  background:rgba(255,255,255,0.06);
+  color:white;
+}
+
+.feedback-form button{
+  background:var(--gold);
+  border:none;
+  padding:12px;
+  border-radius:12px;
+  font-weight:700;
+  cursor:pointer;
+  color:black;
+}
 </style>
 </head>
 <body>
@@ -639,6 +743,29 @@ body{
   </div>
 </div>
 
+<!-- FEEDBACK SECTION -->
+<section class="feedback-section">
+  <h2 class="feedback-title">What Our Customers Say</h2>
+
+  <div class="feedback-wrapper">
+    <button class="fb-nav left" onclick="slideFeedback(-1)">‹</button>
+
+    <div class="feedback-viewport">
+      <div class="feedback-track" id="feedbackTrack">
+        <!-- feedback cards injected here -->
+      </div>
+    </div>
+
+    <button class="fb-nav right" onclick="slideFeedback(1)">›</button>
+  </div>
+
+  <!-- FEEDBACK FORM -->
+  <div class="feedback-form">
+    <input type="text" id="fbName" placeholder="Your name">
+    <textarea id="fbMessage" placeholder="Your feedback"></textarea>
+    <button onclick="submitFeedback()">Send Feedback</button>
+  </div>
+</section>
 
 <!-- Paystack Inline Script -->
 <script src="https://js.paystack.co/v1/inline.js"></script>
@@ -1230,6 +1357,123 @@ contactBtn.addEventListener("click", () => {
 /* ---------- Initial ---------- */
 fetchProducts();
 saveCart();
+
+/* ================= FEEDBACK SYSTEM (API READY) ================= */
+
+const FEEDBACK_API = "/api/feedbacks"; // change later if needed
+
+const track = document.getElementById("feedbackTrack");
+let feedbacks = [];
+let fbIndex = 0;
+let autoSlideTimer = null;
+
+/* ---------- Fetch Feedbacks ---------- */
+async function loadFeedbacks(){
+  try{
+    const res = await fetch(FEEDBACK_API);
+    feedbacks = await res.json();
+
+    if(!Array.isArray(feedbacks)) feedbacks = [];
+    renderFeedbacks();
+
+  }catch(err){
+    console.error("Failed to load feedbacks", err);
+  }
+}
+
+/* ---------- Render Feedbacks ---------- */
+function renderFeedbacks(){
+  track.innerHTML = "";
+  fbIndex = 0;
+
+  feedbacks.forEach(f=>{
+    track.innerHTML += `
+      <div class="feedback-card">
+        <div class="feedback-name">${escapeHTML(f.name)}</div>
+        <div class="feedback-text">${escapeHTML(f.message)}</div>
+      </div>
+    `;
+  });
+
+  handleControls();
+}
+
+/* ---------- Controls & Auto Slide ---------- */
+function handleControls(){
+  clearInterval(autoSlideTimer);
+
+  const arrows = document.querySelectorAll(".fb-nav");
+
+  if(feedbacks.length <= 4){
+    arrows.forEach(a => a.style.display = "none");
+    track.style.transform = "translateX(0)";
+    return;
+  }
+
+  arrows.forEach(a => a.style.display = "block");
+  startAutoSlide();
+}
+
+function slideFeedback(dir){
+  const pages = Math.ceil(feedbacks.length / 4);
+  fbIndex = Math.min(Math.max(fbIndex + dir, 0), pages - 1);
+  track.style.transform = `translateX(-${fbIndex * 100}%)`;
+}
+
+function startAutoSlide(){
+  autoSlideTimer = setInterval(()=>{
+    const pages = Math.ceil(feedbacks.length / 4);
+    fbIndex = (fbIndex + 1) % pages;
+    track.style.transform = `translateX(-${fbIndex * 100}%)`;
+  },3000);
+}
+
+/* ---------- Submit Feedback ---------- */
+async function submitFeedback(){
+  const name = document.getElementById("fbName").value.trim();
+  const message = document.getElementById("fbMessage").value.trim();
+
+  if(!name || !message){
+    toast("Please fill all fields");
+    return;
+  }
+
+  try{
+    const res = await fetch(FEEDBACK_API,{
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ name, message })
+    });
+
+    if(!res.ok) throw new Error("Failed");
+
+    document.getElementById("fbName").value = "";
+    document.getElementById("fbMessage").value = "";
+
+    toast("Thank you for your feedback!");
+
+    // reload feedbacks after submit
+    loadFeedbacks();
+
+  }catch(err){
+    console.error(err);
+    toast("Unable to send feedback");
+  }
+}
+
+/* ---------- Utilities ---------- */
+function escapeHTML(str){
+  return str.replace(/[&<>"']/g, m => ({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#039;"
+  }[m]));
+}
+
+/* ---------- Init ---------- */
+loadFeedbacks();
 </script>
 </body>
 </html>
