@@ -1265,33 +1265,57 @@ function orderWhatsApp(product){
 }
 
 /* ---------- PAYSTACK PAYMENT ---------- */
-proceedPaymentBtn.addEventListener("click", async function() {
+/* ---------- PAYSTACK PAYMENT ---------- */
+proceedPaymentBtn.addEventListener("click", async function () {
+
   const name = document.getElementById("delName").value.trim();
   const address = document.getElementById("delAddress").value.trim();
   const phone = document.getElementById("delPhone").value.trim();
   const bus = document.getElementById("delBus").value.trim();
-  const mode = deliveryForm.querySelector('input[name="deliveryMode"]:checked').value;
-  const emailField = document.getElementById("delEmail");
+  const email = document.getElementById("delEmail").value.trim();
+  const mode = deliveryForm.querySelector('input[name="deliveryMode"]:checked')?.value;
 
-  if (!name || !address || !phone) {
-    alert("Please fill in required delivery details.");
+  // validations
+  if (!name || !address || !phone || !email || !mode) {
+    alert("Please fill in all required delivery details.");
+    return;
+  }
+
+  // simple email validation
+  if (!/^\S+@\S+\.\S+$/.test(email)) {
+    alert("Please enter a valid email address.");
     return;
   }
 
   proceedPaymentBtn.disabled = true;
 
-  const subtotal = cart.reduce((s, i) => s + i.qty * (i.rawPrice || normalizePrice(i.price)), 0);
+  const subtotal = cart.reduce(
+    (s, i) => s + i.qty * (i.rawPrice || normalizePrice(i.price)),
+    0
+  );
+
   const deliveryFee = mode === "door" ? 1500 : 0;
   const totalAmount = subtotal + deliveryFee;
 
   try {
+    // INITIATE PAYMENT
     const res = await fetch(`${backendURL}/api/payment/initiate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, address, phone, bus, mode, cartItems: cart, amount: totalAmount })
+      body: JSON.stringify({
+        name,
+        address,
+        phone,
+        email,        // ✅ send email to backend
+        bus,
+        mode,
+        cartItems: cart,
+        amount: totalAmount
+      })
     });
 
     const data = await res.json();
+
     if (!data || !data.reference) {
       alert("Failed to initiate payment. Try again.");
       proceedPaymentBtn.disabled = false;
@@ -1300,15 +1324,17 @@ proceedPaymentBtn.addEventListener("click", async function() {
 
     const handler = PaystackPop.setup({
       key: data.publicKey,
-      email: emailField ? emailField.value.trim() || "customer@example.com" : "customer@example.com",
+      email: email,               // ✅ Paystack sends receipt to this email
       amount: totalAmount * 100,
       currency: "NGN",
       ref: data.reference,
-      onClose: function() {
+
+      onClose: function () {
         alert("Payment window closed.");
         proceedPaymentBtn.disabled = false;
       },
-      callback: function(response) {
+
+      callback: function (response) {
         (async function verifyPayment() {
           try {
             const verifyRes = await fetch(`${backendURL}/api/payment/verify`, {
@@ -1316,23 +1342,39 @@ proceedPaymentBtn.addEventListener("click", async function() {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ reference: response.reference })
             });
+
             const verifyData = await verifyRes.json();
 
             if (verifyData.status === "success") {
-              toast("Payment successful! Redirecting to summary...");
 
-              // Save cart & order info to localStorage
-              localStorage.setItem("orderInfo", JSON.stringify({name,address,phone,bus,mode,totalAmount}));
+              toast("✅ Payment successful! Redirecting to summary....");
+
+              // Save order info
+              localStorage.setItem(
+                "orderInfo",
+                JSON.stringify({
+                  name,
+                  address,
+                  phone,
+                  email,
+                  bus,
+                  mode,
+                  totalAmount
+                })
+              );
+
               localStorage.setItem("cart", JSON.stringify(cart));
 
-              // Redirect to summary page
-              window.location.href = "summary.html";
+              // Redirect
+              setTimeout(() => {
+                window.location.href = "summary.html";
+              }, 1200);
 
             } else {
               alert("Payment verification failed. Please contact support.");
             }
 
-          } catch(err) {
+          } catch (err) {
             console.error(err);
             alert("Error verifying payment.");
           } finally {
@@ -1344,7 +1386,7 @@ proceedPaymentBtn.addEventListener("click", async function() {
 
     handler.openIframe();
 
-  } catch(err) {
+  } catch (err) {
     console.error(err);
     alert("Error initiating payment. Try again.");
     proceedPaymentBtn.disabled = false;
