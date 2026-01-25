@@ -205,18 +205,27 @@ app.get("/api/feedbacks", async (req, res) => {
 
 // Initiate payment
 app.post("/api/payment/initiate", async (req, res) => {
-  const { name, address, phone, bus, mode, cartItems, amount } = req.body;
-  if(!name || !address || !phone || !cartItems || !amount) {
+  const { name, address, phone, bus, email, mode, cartItems, amount } = req.body;
+
+  if (!name || !address || !phone || !email || !cartItems || !amount) {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
-  const reference = "abwy_" + Date.now(); // Unique reference
+  const reference = "abwy_" + Date.now();
+
   const paystackPayload = {
-    email: "customer@example.com", // optional: you can pass email from form
-    amount: amount * 100, // Paystack expects amount in kobo
+    email, // ✅ CUSTOMER EMAIL (Paystack sends receipt here)
+    amount: amount * 100,
     currency: "NGN",
     reference,
-    metadata: { customer_name: name, address, phone, bus, mode, cartItems }
+    metadata: {
+      customer_name: name,
+      phone,
+      address,
+      bus,
+      mode,
+      cartItems
+    }
   };
 
   try {
@@ -228,11 +237,19 @@ app.post("/api/payment/initiate", async (req, res) => {
       },
       body: JSON.stringify(paystackPayload)
     });
-    const data = await response.json();
-    if(!data.status) return res.status(400).json({ error: "Paystack initialization failed" });
 
-    res.json({ reference, publicKey: process.env.PAYSTACK_PUBLIC_KEY });
-  } catch(err) {
+    const data = await response.json();
+
+    if (!data.status) {
+      return res.status(400).json({ error: "Paystack initialization failed" });
+    }
+
+    res.json({
+      reference,
+      publicKey: process.env.PAYSTACK_PUBLIC_KEY
+    });
+
+  } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error during payment initiation" });
   }
