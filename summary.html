@@ -170,13 +170,14 @@ h3{ color:var(--gold); font-weight:600; margin-bottom:6px; }
 function formatNumber(n){ return Number(n).toLocaleString(); }
 function load(key,fallback){ try{ return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch{ return fallback; } }
 
-let cart = load("abbyCart", []);
-let orderInfo = load("orderInfo", {});
+let cart = load("maisonCart", []);
+let orderInfo = load("maisonOrderInfo", {});
 
 const summaryItems = document.getElementById("summaryItems");
 const summaryTotal = document.getElementById("summaryTotal");
 const summaryDelivery = document.getElementById("summaryDelivery");
 const sendOrderWhatsAppBtn = document.getElementById("sendOrderWhatsAppBtn");
+const backHomeBtn = document.getElementById("backHomeBtn");
 
 /* ---- mark order as pending when summary loads ---- */
 localStorage.setItem("pendingOrder","true");
@@ -196,7 +197,6 @@ function renderSummary(){
         <div class="item-name">${i.name}</div>
         <div class="item-qty">Quantity: ${i.qty}</div>
         <div class="item-price">₦${formatNumber((i.rawPrice||0)*i.qty)}</div>
-        <small style="color:var(--muted)">Tap to preview</small>
       </div>
     </div>
   `).join("");
@@ -205,66 +205,41 @@ function renderSummary(){
   summaryDelivery.innerHTML = `
     Name: ${orderInfo.name||""}<br>
     Address: ${orderInfo.address||""}<br>
-    Phone: ${orderInfo.phone||""}<br>
-    Bus Stop: ${orderInfo.bus||""}<br>
-    Mode: ${orderInfo.mode||""}
+    Phone: ${orderInfo.phone||""}
   `;
-
-  document.querySelectorAll(".item").forEach(el=>{
-    el.onclick = ()=>{
-      const i = cart[el.dataset.index];
-      previewImage.src = i.image||"";
-      previewName.textContent = i.name;
-      previewQty.textContent = "Quantity: "+i.qty;
-      previewPrice.textContent = "Total: ₦"+formatNumber((i.rawPrice||0)*i.qty);
-      modal.style.display="flex";
-    };
-  });
 }
-
-/* ---------- PREVIEW MODAL ---------- */
-const modal=document.getElementById("previewModal");
-const closePreview=document.getElementById("closePreview");
-const previewImage=document.getElementById("previewImage");
-const previewName=document.getElementById("previewName");
-const previewQty=document.getElementById("previewQty");
-const previewPrice=document.getElementById("previewPrice");
-
-closePreview.onclick=()=> modal.style.display="none";
-modal.onclick=e=>{ if(e.target===modal) modal.style.display="none"; };
 
 /* ---------- WHATSAPP SEND ---------- */
 sendOrderWhatsAppBtn.onclick=()=>{
   if(!cart || cart.length===0) return;
 
   const message = `
-Hello Abby Secret,
+Hello MAISON,
 I have placed an order:
 
-Items:
-${cart.map(i=>"- "+i.name+" x"+i.qty+"\nImage: "+i.image).join("\n\n")}
+${cart.map(i=>"- "+i.name+" x"+i.qty).join("\n")}
 
-Total Paid: ₦${formatNumber(orderInfo.totalAmount||0)}
+Total: ₦${formatNumber(orderInfo.totalAmount||0)}
 
-Delivery Details:
 Name: ${orderInfo.name||""}
 Address: ${orderInfo.address||""}
 Phone: ${orderInfo.phone||""}
-Bus Stop: ${orderInfo.bus||""}
-Mode: ${orderInfo.mode||""}
 `;
 
   window.open("https://wa.me/2349122054068?text="+encodeURIComponent(message),"_blank");
 
-  // order completed — clear pending flag (DO NOT clear cart here!)
+  // Order completed
   localStorage.removeItem("pendingOrder");
 };
 
 /* ---------- BACK TO HOME ---------- */
-document.getElementById("backHomeBtn").onclick=()=>{
+backHomeBtn.onclick=()=>{
   if(localStorage.getItem("pendingOrder")==="true"){
-    const confirmSend = confirm("You haven't sent your order yet. Do you want to send it now?");
-    if(confirmSend){ sendOrderWhatsAppBtn.click(); return; }
+    const confirmLeave = confirm("You haven't sent your order yet. Do you want to send it now?");
+    if(confirmLeave){
+      sendOrderWhatsAppBtn.click();
+      return;
+    }
   }
   window.location.href="home.html";
 };
